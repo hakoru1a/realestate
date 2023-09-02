@@ -1,4 +1,4 @@
-package com.dpdc.realestate.jwt;
+package com.dpdc.realestate.dto;
 
 import lombok.Getter;
 
