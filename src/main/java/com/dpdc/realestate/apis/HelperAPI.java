@@ -27,23 +27,15 @@ public class HelperAPI {
     @RequestMapping("/message/")
     @Async
     public void sendMessage(@RequestBody SMS sms){
-        try{
-            helperService.sendMessage(sms.getToPhone(), sms.getContent());
-        }catch (Exception ex){
-            throw new MessageSendingException("Failed to send the message");
-        }
+        helperService.sendMessage(sms.getToPhone(), sms.getContent());
     }
     @PostMapping
     @RequestMapping("/mail/")
     @Async
     public void sendMail(@RequestBody Mail mail){
-        try{
-            Map<String, String> model = new HashMap<>();
-            model.put("Name", "Chương");
-            model.put("location", "Bangalore,India");
-            helperService.sendMail(mail, model);
-        }catch (Exception ex){
-            throw new MessageSendingException("Failed to send the message");
-        }
+        Map<String, String> model = new HashMap<>();
+        model.put("Name", "Chương");
+        model.put("location", "Bangalore,India");
+        helperService.sendMail(mail, model);
     }
 }

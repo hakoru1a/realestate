@@ -18,10 +18,10 @@ public interface HelperService {
 
 //    Message service
 
-    boolean sendMessage(String toPhone, String message);
+    void sendMessage(String toPhone, String message);
 
 //    Mail service
 
 
-    boolean sendMail(Mail mail, Map<String, String> model);
+    void sendMail(Mail mail, Map<String, String> model);
 }

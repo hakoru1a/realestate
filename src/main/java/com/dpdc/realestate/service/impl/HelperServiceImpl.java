@@ -1,9 +1,9 @@
 package com.dpdc.realestate.service.impl;
 
-
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.dpdc.realestate.dto.request.Mail;
+import com.dpdc.realestate.exception.MessageSendingException;
 import com.dpdc.realestate.service.HelperService;
 import com.twilio.type.PhoneNumber;
 import freemarker.template.Configuration;
@@ -14,6 +14,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -91,24 +92,24 @@ public class HelperServiceImpl implements HelperService {
     }
 
     @Override
-    public boolean sendMessage(String toPhone, String content) {
+    @Async
+    public void sendMessage(String toPhone, String content) {
         try {
             String fromPhone = env.getProperty("twilio.phone_number");
-
             Message message = Message.creator(
                     new PhoneNumber(toPhone),
                     new PhoneNumber(fromPhone),
                     content).create();
-
             System.out.println("SMS sent with SID: " + message.getSid());
-            return true;
         } catch (Exception ex) {
             System.out.println("Error sending SMS: " + ex.getMessage());
-            return false;
+            throw new MessageSendingException("Failed to send the message");
         }
     }
+
     @Override
-    public boolean sendMail(Mail mail, Map<String, String> model){
+    @Async
+    public void sendMail(Mail mail, Map<String, String> model){
         MimeMessage message = javaMailSender.createMimeMessage();
         try {
             // set mediaType
@@ -127,9 +128,9 @@ public class HelperServiceImpl implements HelperService {
             helper.setFrom(env.getProperty("spring.mail.username"));
             javaMailSender.send(message);
 
-            return true;
-        } catch (MessagingException | IOException | TemplateException e) {
-           return false;
+        } catch (MessagingException | IOException | TemplateException ex) {
+            System.out.println("Error sending Mail: " + ex.getMessage());
+            throw new MessageSendingException("Failed to send the message");
         }
     }
 
