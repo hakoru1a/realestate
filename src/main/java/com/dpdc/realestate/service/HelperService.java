@@ -23,6 +23,5 @@ public interface HelperService {
 //    Mail service
 
 
-
     boolean sendMail(Mail mail, Map<String, String> model);
 }
