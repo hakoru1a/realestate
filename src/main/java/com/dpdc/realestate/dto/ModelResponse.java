@@ -1,10 +1,12 @@
 package com.dpdc.realestate.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
+@Data
+@AllArgsConstructor
 public class ModelResponse {
 
 
@@ -12,9 +14,5 @@ public class ModelResponse {
 
     private Object data;
 
-    public ModelResponse(String message, Object data) {
-        this.message = message;
-        this.data = data;
-    }
 
 }
