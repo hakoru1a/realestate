@@ -35,15 +35,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private UserService userService;
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
+
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder.userDetailsService(userService
-        ).passwordEncoder(passwordEncoder());
+        ).passwordEncoder(passwordEncoder);
     }
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+
     @Override @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();

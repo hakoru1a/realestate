@@ -18,6 +18,7 @@ import java.time.Instant;
 })
 public class Property {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 

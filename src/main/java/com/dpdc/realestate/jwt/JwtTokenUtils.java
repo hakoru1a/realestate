@@ -64,7 +64,8 @@ public class JwtTokenUtils implements Serializable{
         if (!isRefreshToken){
             expireTime = new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000);
         }
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+        return Jwts.builder().setClaims(claims).setSubject(subject)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(expireTime)
                 .signWith(SignatureAlgorithm.HS512, secret).compact();
     }

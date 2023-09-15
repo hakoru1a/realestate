@@ -1,7 +1,9 @@
 package com.dpdc.realestate.models.entity;
 
+import com.dpdc.realestate.models.enumerate.Gender;
 import lombok.Getter;
 import lombok.Setter;
+
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -11,9 +13,14 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "customer", schema = "realestate")
+@Table(name = "customer", schema = "realestate", indexes = {
+        @Index(name = "username", columnList = "username", unique = true),
+        @Index(name = "email", columnList = "email", unique = true),
+        @Index(name = "phone", columnList = "phone", unique = true)
+})
 public class Customer {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -41,12 +48,13 @@ public class Customer {
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "TIMESTAMP_of_birth")
-    private Instant timestampOfBirth;
+    @Column(name = "date_of_birth")
+    private Instant dateOfBirth;
 
     @Lob
     @Column(name = "gender")
-    private String gender;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
 
     @Lob
     @Column(name = "address")
@@ -63,10 +71,10 @@ public class Customer {
     @Column(name = "is_verified")
     private Boolean isVerified;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false)
     private Instant createdAt;
 
-    @Column(name = "modified_at")
+    @Column(name = "modified_at", insertable = false)
     private Instant modifiedAt;
 
 }

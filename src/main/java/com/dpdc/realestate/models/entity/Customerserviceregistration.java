@@ -16,6 +16,7 @@ import java.time.Instant;
 })
 public class Customerserviceregistration {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 

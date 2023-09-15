@@ -2,6 +2,8 @@ package com.dpdc.realestate.models.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -12,6 +14,9 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "user", schema = "realestate", indexes = {
+        @Index(name = "username", columnList = "username", unique = true),
+        @Index(name = "email", columnList = "email", unique = true),
+        @Index(name = "phone", columnList = "phone", unique = true),
         @Index(name = "role_id", columnList = "role_id")
 })
 public class User {
@@ -45,8 +50,8 @@ public class User {
     private String email;
 
     @Size(max = 20)
-    @Column(name = "phone_number", length = 20)
-    private String phoneNumber;
+    @Column(name = "phone", length = 20)
+    private String phone;
 
     @Lob
     @Column(name = "avatar")
@@ -62,9 +67,14 @@ public class User {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    @Column(name = "date_of_birth")
+    private Instant dateOfBirth;
+
+    @CreatedDate
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @LastModifiedDate
     @Column(name = "modified_at")
     private Instant modifiedAt;
 

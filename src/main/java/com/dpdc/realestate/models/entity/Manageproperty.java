@@ -14,6 +14,7 @@ import javax.persistence.*;
 })
 public class Manageproperty {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 

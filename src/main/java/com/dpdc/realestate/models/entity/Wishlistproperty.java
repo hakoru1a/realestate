@@ -15,6 +15,7 @@ import java.time.Instant;
 })
 public class Wishlistproperty {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 

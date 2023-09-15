@@ -2,9 +2,9 @@ package com.dpdc.realestate.apis;
 
 import com.dpdc.realestate.dto.ModelResponse;
 import com.dpdc.realestate.dto.request.CredentialRegister;
+import com.dpdc.realestate.dto.request.ProfileCustomer;
 import com.dpdc.realestate.exception.DataAlreadyExistException;
 import com.dpdc.realestate.models.entity.Customer;
-import com.dpdc.realestate.models.entity.User;
 import com.dpdc.realestate.service.CustomerService;
 import com.dpdc.realestate.service.UserService;
 import org.modelmapper.ModelMapper;
@@ -21,28 +21,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users/")
-public class UserAPI {
+@RequestMapping("/api/customers/")
+public class CustomerAPI {
+    @Autowired
+    private ModelMapper mapper;
+    @Autowired
+    private CustomerService customerService;
 
     @Autowired
     private UserService userService;
 
     @Autowired
     private Environment env;
-
-    @Autowired
-    private ModelMapper mapper;
-
-    @Autowired
-    private CustomerService customerService;
-
-
     @PostMapping
     public ResponseEntity<ModelResponse> registerUser(@RequestBody @Valid CredentialRegister credential
-            , BindingResult result) throws Exception {
+            , BindingResult result) throws Exception{
+        // Check lỗi input
         if (result.hasErrors()) {
             throw new BindException(result);
         }
+
         Map<String, String> errors = new HashMap<>();
         if (customerService.isExistByPhone(credential.getPhoneNumber()) ||
                 userService.isExistByPhone(credential.getPhoneNumber())){
@@ -60,16 +58,22 @@ public class UserAPI {
             throw new DataAlreadyExistException(errors);
 
         try {
-            User newUser = mapper.map(credential, User.class);
-            User savedUser = userService.register(newUser);
+            Customer newCustomer = mapper.map(credential,Customer.class);
+            Customer savedCustomer = customerService.register(newCustomer);
             return new
-                    ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
-                    savedUser), HttpStatus.OK);
+                    ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedCustomer), HttpStatus.OK);
         }
         catch (Exception ex){
             throw new Exception();
         }
     }
-
-
+    @PostMapping("/{id}/update-profile/")
+    public ResponseEntity<ModelResponse> updateProfile(@PathVariable Integer id,
+                                                       @RequestBody  ProfileCustomer profile
+    ,BindingResult result) throws Exception{
+        if (result.hasErrors()) {
+            throw new BindException(result);
+        }
+        return null;
+    }
 }
