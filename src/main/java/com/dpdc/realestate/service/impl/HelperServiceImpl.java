@@ -20,6 +20,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,8 +46,10 @@ public class HelperServiceImpl implements HelperService {
     @Override
     public String uploadImage(MultipartFile file) {
         try {
-            Map uploadResult = this.cloudinary.uploader()
-                    .upload(file.getBytes(), ObjectUtils.asMap("resource_type", "auto"));
+            Map<String, Object> options = new HashMap<>();
+            options.put("resource_type", "auto");
+            options.put("folder", env.getProperty("cloudinary.folder_property"));
+            Map uploadResult = this.cloudinary.uploader().upload(file.getBytes(), options);
             return (String) uploadResult.get("secure_url");
         } catch (IOException ex) {
             Logger.getLogger(HelperServiceImpl.class.getName()).log(Level.SEVERE, null, ex);

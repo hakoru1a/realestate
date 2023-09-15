@@ -14,16 +14,24 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "role", schema = "realestate")
-public class Role {
+@Table(name = "location", schema = "realestate")
+public class Location {
     @Id
     @Column(name = "id", nullable = false)
     private Integer id;
 
     @Size(max = 255)
     @NotNull
-    @Column(name = "role_name", nullable = false)
-    private String roleName;
+    @Column(name = "city", nullable = false)
+    private String city;
+
+    @Size(max = 255)
+    @Column(name = "state")
+    private String state;
+
+    @Size(max = 255)
+    @Column(name = "country")
+    private String country;
 
     @Column(name = "created_at")
     private Instant createdAt;

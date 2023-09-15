@@ -1,26 +1,24 @@
-package com.dpdc.realestate;
+package com.dpdc.realestate.handler;
 
 
 import com.dpdc.realestate.dto.ModelResponse;
 import com.dpdc.realestate.exception.NotFoundException;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpHeaders;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @ControllerAdvice
+@ComponentScan(basePackages = {
+        "com.dpdc"
+})
 public class RestResponseEntityExceptionHandler    {
 
     @ExceptionHandler(value = {NotFoundException.class})

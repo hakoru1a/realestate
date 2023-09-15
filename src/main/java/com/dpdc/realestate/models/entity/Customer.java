@@ -11,12 +11,9 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "user", schema = "realestate", indexes = {
-        @Index(name = "role_id", columnList = "role_id")
-})
-public class User {
+@Table(name = "customer", schema = "realestate")
+public class Customer {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -30,14 +27,10 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id")
-    private Role role;
-
     @Size(max = 255)
     @NotNull
-    @Column(name = "fullname", nullable = false)
-    private String fullname;
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
 
     @Size(max = 255)
     @NotNull
@@ -45,22 +38,30 @@ public class User {
     private String email;
 
     @Size(max = 20)
-    @Column(name = "phone_number", length = 20)
-    private String phoneNumber;
+    @Column(name = "phone", length = 20)
+    private String phone;
+
+    @Column(name = "TIMESTAMP_of_birth")
+    private Instant timestampOfBirth;
 
     @Lob
-    @Column(name = "avatar")
-    private String avatar;
-
-    @Column(name = "hire_date")
-    private Instant hireDate;
+    @Column(name = "gender")
+    private String gender;
 
     @Lob
     @Column(name = "address")
     private String address;
 
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @Lob
+    @Column(name = "avatar")
+    private String avatar;
+
+    @Size(max = 255)
+    @Column(name = "occupation")
+    private String occupation;
+
+    @Column(name = "is_verified")
+    private Boolean isVerified;
 
     @Column(name = "created_at")
     private Instant createdAt;

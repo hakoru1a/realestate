@@ -17,15 +17,23 @@ import java.util.Set;
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
+//    @Autowired
+//    private CustomerRepository customerRepository;
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(s);
-        if (user == null){
-            throw new UsernameNotFoundException("User does not exist!");
+        User user = userRepository.findById(1).get();
+        if (user != null) {
+            Set<GrantedAuthority> authorities = new HashSet<>();
+            authorities.add(new SimpleGrantedAuthority(user.getRole().getRoleName()));
+            return new org.springframework.security.core.userdetails.User(user.getUsername(),
+                    user.getPassword(), authorities);
         }
-        Set<GrantedAuthority> auth = new HashSet<>();
-        auth.add(new SimpleGrantedAuthority(user.getRoleByRoleId().getName()));
-        return new org.springframework.security.core.userdetails.User(user.getUsername(),
-                user.getPassword(), auth);
+//        Customer customer = customerRepository.findCustomerByUsername(s);
+//        if (customer != null) {
+//            Set<GrantedAuthority> authorities = new HashSet<>();
+//            return new org.springframework.security.core.userdetails.User(customer.getUsername(),
+//                    customer.getPassword(), authorities);
+//        }
+        throw new UsernameNotFoundException("User does not exist!");
     }
 }

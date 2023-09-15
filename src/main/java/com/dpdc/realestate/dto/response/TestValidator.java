@@ -8,7 +8,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 
 @Data
-
 public class TestValidator {
     @NotEmpty(message = "Thiếu username")
     private String username;

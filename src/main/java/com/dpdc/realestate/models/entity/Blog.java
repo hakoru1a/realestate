@@ -3,10 +3,7 @@ package com.dpdc.realestate.models.entity;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.Instant;
@@ -14,16 +11,29 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "role", schema = "realestate")
-public class Role {
+@Table(name = "blog", schema = "realestate", indexes = {
+        @Index(name = "user_id", columnList = "user_id")
+})
+public class Blog {
     @Id
     @Column(name = "id", nullable = false)
     private Integer id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Size(max = 255)
     @NotNull
-    @Column(name = "role_name", nullable = false)
-    private String roleName;
+    @Column(name = "title", nullable = false)
+    private String title;
+
+    @Lob
+    @Column(name = "content")
+    private String content;
+
+    @Column(name = "publish_date")
+    private Instant publishDate;
 
     @Column(name = "created_at")
     private Instant createdAt;

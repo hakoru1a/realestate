@@ -45,8 +45,6 @@ public class HelperAPI {
         model.put("location", "Bangalore,India");
         helperService.sendMail(mail, model);
     }
-
-
     @PostMapping
     public ResponseEntity<ModelResponse> testValidator (@RequestBody @Valid TestValidator model
             , BindingResult result) throws BindException {
