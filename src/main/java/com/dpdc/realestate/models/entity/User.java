@@ -2,8 +2,6 @@ package com.dpdc.realestate.models.entity;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -57,6 +55,10 @@ public class User {
     @Column(name = "avatar")
     private String avatar;
 
+    @Lob
+    @Column(name = "gender")
+    private String gender;
+
     @Column(name = "hire_date")
     private Instant hireDate;
 
@@ -70,11 +72,9 @@ public class User {
     @Column(name = "date_of_birth")
     private Instant dateOfBirth;
 
-    @CreatedDate
     @Column(name = "created_at")
     private Instant createdAt;
 
-    @LastModifiedDate
     @Column(name = "modified_at")
     private Instant modifiedAt;
 

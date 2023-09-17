@@ -23,10 +23,5 @@ public class Role {
     @Column(name = "role_name", nullable = false)
     private String roleName;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
-
-    @Column(name = "modified_at")
-    private Instant modifiedAt;
 
 }

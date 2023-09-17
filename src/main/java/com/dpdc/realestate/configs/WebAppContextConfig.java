@@ -1,10 +1,14 @@
 package com.dpdc.realestate.configs;
 
+import com.dpdc.realestate.formatter.CategoryFormatter;
+import com.dpdc.realestate.models.entity.Property;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -25,6 +29,8 @@ public class WebAppContextConfig implements WebMvcConfigurer {
     }
 
 
+
+
     @Primary
     @Bean
     public FreeMarkerConfigurationFactoryBean factoryBean() {
@@ -35,10 +41,27 @@ public class WebAppContextConfig implements WebMvcConfigurer {
 
     @Bean
     public ModelMapper modelMapper () {
-        return new ModelMapper();
+        ModelMapper modelMapper = new ModelMapper();
+
+        // Allow ModelMapper to access private fields
+        modelMapper.getConfiguration()
+                .setFieldMatchingEnabled(true)
+                .setFieldAccessLevel(org.modelmapper.config.Configuration.AccessLevel.PRIVATE);
+
+        // Create a custom mapping to ignore 'location' when mapping Property
+        modelMapper.createTypeMap(Property.class, Property.class)
+                .addMapping(Property::getLocation, Property::setLocation);
+
+        return modelMapper;
     }
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Override
+    public void addFormatters(FormatterRegistry registry) {
+
+        registry.addFormatter(new CategoryFormatter());
     }
 }

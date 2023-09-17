@@ -19,22 +19,20 @@ public class Location {
     private Integer id;
 
     @Size(max = 255)
-    @NotNull
+    @NotNull(message = "Thành phố là bắt buộc")
     @Column(name = "city", nullable = false)
     private String city;
 
     @Size(max = 255)
-    @Column(name = "state")
-    private String state;
+    @NotNull(message = "Quận là bắt buộc")
+    @Column(name = "district")
+    private String district;
 
     @Size(max = 255)
-    @Column(name = "country")
-    private String country;
+    @NotNull(message = "Đường là bắt buộc")
+    @Column(name = "street")
+    private String street;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
 
-    @Column(name = "modified_at")
-    private Instant modifiedAt;
 
 }

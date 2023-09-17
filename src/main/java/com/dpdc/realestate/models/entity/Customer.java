@@ -1,9 +1,7 @@
 package com.dpdc.realestate.models.entity;
 
-import com.dpdc.realestate.models.enumerate.Gender;
 import lombok.Getter;
 import lombok.Setter;
-
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -36,8 +34,8 @@ public class Customer {
 
     @Size(max = 255)
     @NotNull
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
+    @Column(name = "fullname", nullable = false)
+    private String fullname;
 
     @Size(max = 255)
     @NotNull
@@ -53,8 +51,7 @@ public class Customer {
 
     @Lob
     @Column(name = "gender")
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+    private String gender;
 
     @Lob
     @Column(name = "address")
@@ -68,13 +65,13 @@ public class Customer {
     @Column(name = "occupation")
     private String occupation;
 
-    @Column(name = "is_verified")
-    private Boolean isVerified;
+    @Column(name = "is_active")
+    private Boolean isActive;
 
-    @Column(name = "created_at", insertable = false)
+    @Column(name = "created_at")
     private Instant createdAt;
 
-    @Column(name = "modified_at", insertable = false)
+    @Column(name = "modified_at")
     private Instant modifiedAt;
 
 }
