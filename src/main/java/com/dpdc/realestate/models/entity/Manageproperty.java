@@ -8,10 +8,7 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity
-@Table(name = "manageproperty", schema = "realestate", indexes = {
-        @Index(name = "user_id", columnList = "user_id"),
-        @Index(name = "property_id", columnList = "property_id")
-})
+@Table(name = "manageproperty")
 public class Manageproperty {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

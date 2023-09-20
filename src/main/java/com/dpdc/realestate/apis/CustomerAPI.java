@@ -33,6 +33,7 @@ public class CustomerAPI {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
     @Autowired
     private UserService userService;
 
@@ -73,7 +74,7 @@ public class CustomerAPI {
     }
 
 
-    @PatchMapping("/{id}/change-password/")
+    @PatchMapping("/change-password/{id}/")
     public ResponseEntity<ModelResponse> changePassword(
             @RequestBody @Valid ChangePassword passwords,
             @PathVariable Integer id, BindingResult result) throws Exception {
@@ -86,21 +87,18 @@ public class CustomerAPI {
         }
         Customer savedCustomer = customerService.
                 updatePassword(id, passwordEncoder.encode(passwords.getCurrentPassword()));
-        if (savedCustomer == null){
-            throw  new Exception(env.getProperty("api.notify.change_password_fail"));
-        }
         return new
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedCustomer), HttpStatus.OK);
     }
-    @PatchMapping("/{id}/change-status/")
-    public ResponseEntity<ModelResponse> changeStatus(@RequestBody Map<String, Boolean> activeMap, @PathVariable Integer id) throws Exception {
+    @PatchMapping("/change-status/{id}/")
+    public ResponseEntity<ModelResponse> changeStatus(@RequestBody Map<String, Boolean>
+                                                                  activeMap,
+                                                      @PathVariable Integer id) throws Exception {
         boolean isActive = activeMap.get("active");
         Customer savedCustomer = customerService.updateStatus(id, isActive);
-        if (savedCustomer == null){
-            throw  new Exception(env.getProperty("api.notify.change_status_fail"));
-        }
         return new
-                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedCustomer), HttpStatus.OK);
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                savedCustomer), HttpStatus.OK);
     }
 
 }

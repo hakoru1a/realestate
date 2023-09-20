@@ -1,5 +1,6 @@
 package com.dpdc.realestate.models.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,6 +8,8 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.Instant;
+import java.util.Objects;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -28,12 +31,13 @@ public class User {
     @Column(name = "username", nullable = false)
     private String username;
 
+    @JsonIgnore
     @Size(max = 255)
     @NotNull
     @Column(name = "password", nullable = false)
     private String password;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;
 
@@ -78,4 +82,20 @@ public class User {
     @Column(name = "modified_at")
     private Instant modifiedAt;
 
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "manageproperty",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "property_id")
+    )
+    private Set<Property> propertyManage;
+
+
+
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+//    private Set<Manageproperty> manageProperties;
+
 }
+

@@ -23,4 +23,6 @@ public interface CustomerService {
     Customer updatePassword(Integer id, String newPassword);
 
     Customer updateStatus (Integer id, Boolean isActive);
+
+    Customer getCurrentCredential();
 }

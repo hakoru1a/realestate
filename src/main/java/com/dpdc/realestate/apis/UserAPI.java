@@ -8,6 +8,7 @@ import com.dpdc.realestate.dto.request.ProfileUser;
 import com.dpdc.realestate.exception.DataAlreadyExistException;
 import com.dpdc.realestate.exception.PasswordException;
 import com.dpdc.realestate.models.entity.Customer;
+import com.dpdc.realestate.models.entity.Role;
 import com.dpdc.realestate.models.entity.User;
 import com.dpdc.realestate.service.CustomerService;
 import com.dpdc.realestate.service.UserService;
@@ -56,6 +57,7 @@ public class UserAPI {
         validationService.validateCredential(credential, false);
         try {
             User newUser = mapper.map(credential, User.class);
+            // default role = staff
             User savedUser = userService.register(newUser);
             return new
                     ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
@@ -79,7 +81,7 @@ public class UserAPI {
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                 savedUser), HttpStatus.OK);
     }
-    @PatchMapping("/{id}/change-password/")
+    @PatchMapping("/change-password/{id}/")
     public ResponseEntity<ModelResponse> changePassword(
             @RequestBody @Valid ChangePassword passwords,
             @PathVariable Integer id, BindingResult result) throws Exception {
@@ -97,7 +99,7 @@ public class UserAPI {
         return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedUser), HttpStatus.OK);
     }
 
-    @PatchMapping("/{id}/change-status/")
+    @PatchMapping("/change-status/{id}/")
     public ResponseEntity<ModelResponse> changeStatus(@RequestBody Map<String, Boolean> activeMap, @PathVariable Integer id) throws Exception {
         boolean isActive = activeMap.get("active");
         User savedUser = userService.updateStatus(id, isActive);

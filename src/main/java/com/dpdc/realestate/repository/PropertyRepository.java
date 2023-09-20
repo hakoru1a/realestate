@@ -1,8 +1,9 @@
 package com.dpdc.realestate.repository;
 
+import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.models.entity.Property;
-import com.dpdc.realestate.repository.custom.PropertyRepositoryCustom;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,42 +16,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 @Repository
-@Transactional
-public interface PropertyRepository extends JpaRepository<Property, Integer>, JpaSpecificationExecutor<Property> {
+public interface PropertyRepository extends JpaRepository<Property, Integer>,
+        JpaSpecificationExecutor<Property> {
     @Modifying
-    @Query("UPDATE Property p SET p.isDeleted = true WHERE p.id = :propertyId")
-    void softDeletePropertyById(@Param("propertyId") Integer propertyId);
+    @Query("UPDATE Property p SET p.isDeleted = :isDeleted WHERE p.id = :propertyId")
+    void softDeletePropertyById(@Param("propertyId") Integer propertyId, @Param("isDeleted") Boolean isDeleted);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Property p SET p.isActive = :isActive WHERE p.id = :propertyId")
+    void updatePropertyActiveStatus(@Param("propertyId") Integer propertyId, @Param("isActive") Boolean isActive);
+
+    Page<Property> findAllByCustomerId(Integer customerId, Pageable pageable);
 
 
-    Page<Property> findAllByIsDeletedFalse(Pageable pageable);
+    @Query("SELECT p FROM Property p WHERE p.id IN" +
+            " (SELECT w.property.id FROM Wishlist w WHERE w.customer.id = :customerId)")
+    Page<Property> findAllPropertiesInWishlistByCustomerId(@Param("customerId") Integer customerId,
+                                                           Pageable pageable);
 
 
-
-
-
-
-
-    //    @Query("SELECT p FROM Property p " +
-//            "LEFT JOIN p.location loc " +
-//            "WHERE " +
-//            "(:propertyName IS NULL OR p.propertyName LIKE %:propertyName%) AND " +
-//            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
-//            "(:priceFrom IS NULL OR p.price >= :priceFrom) AND " +
-//            "(:priceTo IS NULL OR p.price <= :priceTo) AND " +
-//            "p.isDeleted = false AND " +
-//            "(:city IS NULL OR loc.city LIKE %:city%) AND " +
-//            "(:street IS NULL OR loc.street LIKE %:street%) AND " +
-//            "(:district IS NULL OR loc.district LIKE %:district%)")
-//    Page<Property> getProperties(
-//            @Param("propertyName") String propertyName,
-//            @Param("categoryId") Integer categoryId,
-//            @Param("priceFrom") BigDecimal priceFrom,
-//            @Param("priceTo") BigDecimal priceTo,
-//            @Param("city") String city,
-//            @Param("street") String street,
-//            @Param("district") String district,
-//            Pageable pageable
-//    );
 }

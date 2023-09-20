@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -36,28 +37,39 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
-
     @Autowired
     private PasswordEncoder passwordEncoder;
+
     @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
-        authenticationManagerBuilder.userDetailsService(userService
-        ).passwordEncoder(passwordEncoder);
+        authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(passwordEncoder);
     }
 
-    @Override @Bean
+    @Override
+    @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
+
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable()
                 .authorizeRequests()
-                .anyRequest().permitAll()
+                .antMatchers(HttpMethod.POST, "/api/properties/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.GET, "/api/properties/my-property/{id}/").hasRole("CUSTOMER") // id là id customer
+                .antMatchers(HttpMethod.DELETE, "/api/properties/hard/{id}/").hasRole("ADMIN")
+                .antMatchers(HttpMethod.POST, "/api/properties/assign/{id}/").hasRole("ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/api/properties/{id}/").hasAnyRole("CUSTOMER", "ADMIN")
+                .antMatchers(HttpMethod.PUT, "/api/properties/{id}/").hasAnyRole("CUSTOMER", "ADMIN")
+                .antMatchers(HttpMethod.PATCH, "/api/properties/undeleted/{id}/").hasAnyRole("CUSTOMER", "ADMIN")
+                .antMatchers(HttpMethod.PATCH, "/api/properties/active/{id}/").hasAnyRole("ADMIN", "STAFF")
+                .anyRequest().permitAll() // All other endpoints are open to all users
                 .and().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
     }
+
+
 
     @Bean
     public CorsFilter corsFilter() {

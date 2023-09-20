@@ -20,20 +20,37 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 @Configuration
 @ControllerAdvice
 @ComponentScan(basePackages = {
         "com.dpdc"
 })
-public class RestResponseEntityExceptionHandler    {
+public class RestResponseEntityExceptionHandler {
     private final String error = "Handle request failure";
-    @ExceptionHandler(value = {Exception.class, SaveDataException.class, NotFoundException.class})
+
+    @ExceptionHandler(value = {Exception.class, SaveDataException.class})
     public ResponseEntity<ModelResponse> handleException(Exception ex) {
-        String errorMessage = ex.getMessage();
-        ModelResponse response = new ModelResponse(errorMessage, null);
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(value = {UnauthorizedAllowException.class})
+    public ResponseEntity<ModelResponse> handleUnauthorizedAllowException(UnauthorizedAllowException ex) {
+        return buildErrorResponse(ex, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(value = {ForbiddenException.class})
+    public ResponseEntity<ModelResponse> handleForbiddenException(ForbiddenException ex) {
+        return buildErrorResponse(ex, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(value = {NotFoundException.class})
+    public ResponseEntity<ModelResponse> handleNotFoundException(NotFoundException ex) {
+        return buildErrorResponse(ex, HttpStatus.NOT_FOUND);
+    }
+
+
+//    Xử lý binding spring validation
     @ExceptionHandler(BindException.class)
     protected ResponseEntity<ModelResponse> customHandleBindException(BindException ex) {
         BindingResult bindingResult = ex.getBindingResult();
@@ -48,6 +65,7 @@ public class RestResponseEntityExceptionHandler    {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    // Data already
     @ExceptionHandler(DataAlreadyExistException.class)
     protected ResponseEntity<ModelResponse> handleDataAlreadyExistException(DataAlreadyExistException ex) {
         Map<String, String> errors = ex.getErrors();
@@ -55,6 +73,15 @@ public class RestResponseEntityExceptionHandler    {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+
+    private ResponseEntity<ModelResponse> buildErrorResponse(Exception ex, HttpStatus status) {
+        String errorMessage = ex.getMessage();
+        ModelResponse response = new ModelResponse(errorMessage, null);
+        return new ResponseEntity<>(response, status);
+    }
+
+
+    //    Xử lý handle lỗi 1 field
     @ExceptionHandler(ImageSizeException.class)
     protected ResponseEntity<ModelResponse> handleImageSizeException(ImageSizeException ex) {
         return handleException(ex, "image");
@@ -71,5 +98,4 @@ public class RestResponseEntityExceptionHandler    {
         ModelResponse response = new ModelResponse(error, errors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
 }

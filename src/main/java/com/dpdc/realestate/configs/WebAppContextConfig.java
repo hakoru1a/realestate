@@ -1,9 +1,10 @@
 package com.dpdc.realestate.configs;
 
 import com.dpdc.realestate.formatter.CategoryFormatter;
+import com.dpdc.realestate.formatter.CustomerFormatter;
+import com.dpdc.realestate.formatter.PropertyFormatter;
 import com.dpdc.realestate.models.entity.Property;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -63,5 +64,9 @@ public class WebAppContextConfig implements WebMvcConfigurer {
     public void addFormatters(FormatterRegistry registry) {
 
         registry.addFormatter(new CategoryFormatter());
+        registry.addFormatter(new PropertyFormatter());
+        registry.addFormatter(new CustomerFormatter());
+
+
     }
 }

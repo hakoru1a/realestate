@@ -19,12 +19,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByEmail(String email);
     Optional<User> findByPhone(String phone);
 
-    @Modifying
+    Optional<User> findByIdAndRoleId(Integer id, Integer roleId);
+
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE User u SET u.password = :newPassword WHERE u.id = :userId")
     int updatePasswordById(@Param("userId") Integer userId, @Param("newPassword") String newPassword);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("UPDATE User u SET u.isActive = :newActive WHERE u.id = :userId")
     int updateActiveStatusById(@Param("userId") Integer userId, @Param("newActive") boolean newActive);

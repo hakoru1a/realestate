@@ -9,18 +9,20 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "wishlist", schema = "realestate", indexes = {
-        @Index(name = "customer_id", columnList = "customer_id", unique = true)
-})
+@Table(name = "wishlist")
 public class Wishlist {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private Customer customer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "property_id")
+    private Property property;
 
     @Column(name = "created_at")
     private Instant createdAt;

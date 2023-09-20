@@ -1,19 +1,24 @@
 package com.dpdc.realestate.service.impl;
 
+import com.dpdc.realestate.exception.NotFoundException;
+import com.dpdc.realestate.handler.EntityCheckHandler;
 import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.models.entity.User;
 import com.dpdc.realestate.repository.CustomerRepository;
 import com.dpdc.realestate.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import javax.persistence.Cacheable;
+import javax.persistence.EntityManager;
 import java.util.Optional;
 
 @Service
@@ -25,13 +30,16 @@ public class CustomerServiceImpl implements CustomerService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private Environment env;
 
     @Override
     public Customer register(Customer newCustomer)  {
         newCustomer.setPassword(passwordEncoder.encode(newCustomer.getPassword()));
         return customerRepository.save(newCustomer);
     }
-    private Customer getCurrentCredential() {
+    @Override
+    public Customer getCurrentCredential() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return findByUsername(authentication.getName()).orElse(null);
     }
@@ -43,6 +51,9 @@ public class CustomerServiceImpl implements CustomerService {
             // Trả về true nếu username đã tồn tại cho người dùng khác, ngược lại trả về false
             Customer currentCredential = getCurrentCredential();
             Optional<Customer> existingUser = customerRepository.findByUsername(username);
+            if (currentCredential == null){
+                return existingUser.isPresent();
+            }
             return existingUser.isPresent()
                     && !existingUser.get().getId().equals(currentCredential.getId()); // Trùng lặp với người dùng khác
         } else {
@@ -57,6 +68,9 @@ public class CustomerServiceImpl implements CustomerService {
         if (isExcept) {
             Customer currentCredential = getCurrentCredential();
             Optional<Customer> existingUser = customerRepository.findByPhone(phone);
+            if (currentCredential == null){
+                return existingUser.isPresent();
+            }
             return existingUser.isPresent()
                     && !existingUser.get().getId().equals(currentCredential.getId()); // Trùng lặp với người dùng khác
         } else {
@@ -69,6 +83,9 @@ public class CustomerServiceImpl implements CustomerService {
         if (isExcept) {
             Customer currentCredential = getCurrentCredential();
             Optional<Customer> existingUser = customerRepository.findByEmail(email);
+            if (currentCredential == null){
+                return existingUser.isPresent();
+            }
             return existingUser.isPresent()
                     && !existingUser.get().getId().equals(currentCredential.getId()); // Trùng lặp với người dùng khác
         } else {
@@ -78,7 +95,8 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Customer findById(Integer id) {
-        return customerRepository.findById(id).orElse(null);
+        return customerRepository.findById(id).orElseThrow(() ->
+                new NotFoundException(env.getProperty("db.notify.not_found")));
     }
 
     @Override
@@ -91,22 +109,19 @@ public class CustomerServiceImpl implements CustomerService {
         return customerRepository.save(customer);
     }
 
+    // Check sau
     @Override
     public Customer updatePassword(Integer id, String newPassword) {
+        EntityCheckHandler.checkEntityExistById(customerRepository, id);
         int updated = customerRepository.updatePasswordById(id, newPassword);
-        if (updated > 0){
-            return findById(id);
-        }
-        return null;
+        return findById(id);
     }
 
     @Override
     public Customer updateStatus(Integer id, Boolean isActive) {
+        EntityCheckHandler.checkEntityExistById(customerRepository, id);
         int updated = customerRepository.updateActiveStatusById(id, isActive);
-        if (updated > 0){
-            return findById(id);
-        }
-        return null;
+        return findById(id);
     }
 
 

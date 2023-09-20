@@ -3,6 +3,7 @@ package com.dpdc.realestate.apis;
 
 import com.dpdc.realestate.dto.ModelResponse;
 import com.dpdc.realestate.exception.DeleteDataException;
+import com.dpdc.realestate.exception.ForbiddenException;
 import com.dpdc.realestate.exception.NotFoundException;
 import com.dpdc.realestate.exception.SaveDataException;
 import com.dpdc.realestate.models.entity.Location;
@@ -17,14 +18,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/properties/")
@@ -57,8 +63,18 @@ public class PropertyAPI {
                 properties), HttpStatus.OK);
     }
 
+    @GetMapping("/my-property/{id}/")
+    public ResponseEntity<ModelResponse> getMyProperty(@PathVariable Integer id,
+                                                       @RequestParam(defaultValue = "1") String page){
+        PageRequest pageable = PageRequest.of(Integer.parseInt(page) - 1,
+                Integer.parseInt(env.getProperty("app.page.size")));
+        Page<Property> properties = propertyService.findMyProperties(id, pageable);
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                properties), HttpStatus.OK);
+    }
+
     @PostMapping
-    public ResponseEntity<ModelResponse> addProperty(@RequestBody @Valid Property property
+    public ResponseEntity<ModelResponse> registerProperty(@RequestBody @Valid Property property
             , BindingResult result) throws BindException {
         if (result.hasErrors()) {
             throw new BindException(result);
@@ -72,6 +88,58 @@ public class PropertyAPI {
         }
     }
 
+
+    @PostMapping("/assign/{id}/")
+    public ResponseEntity<ModelResponse> assignProperty(
+            @RequestBody Map<String, Set<Integer>> staffIds,
+            @PathVariable Integer id
+    ) {
+        try {
+            Set<Integer> ids = staffIds.getOrDefault("staffIds", new HashSet<>());
+            propertyService.assignStaffToProperty(ids, id);
+            return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                    null), HttpStatus.OK);
+        }
+        catch (NotFoundException notFoundException){
+            throw  notFoundException;
+        }
+        catch (Exception exception) {
+            throw new SaveDataException(env.getProperty("db.notify.save_fail"));
+        }
+    }
+
+    @DeleteMapping("/{id}/")
+    public ResponseEntity<ModelResponse> deleteProperty(@PathVariable Integer id) throws Exception {
+        try{
+            propertyService.softDeletePropertyById(id, true);
+            return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                    null), HttpStatus.NO_CONTENT);
+        }
+        catch (ForbiddenException | NotFoundException e){
+            throw e;
+        }
+        catch (Exception ex){
+            throw new Exception(env.getProperty("db.notify.delete_fail"));
+        }
+    }
+
+
+    @DeleteMapping("/hard/{id}/")
+    public ResponseEntity<ModelResponse> hardDeleteProperty(@PathVariable Integer id) {
+        try {
+            propertyService.hardDeletePropertyById(id);
+            return new ResponseEntity<>(
+                    new ModelResponse(env.getProperty("api.notify.success"), null)
+                    , HttpStatus.NO_CONTENT);
+        }
+        catch (ForbiddenException | NotFoundException e){
+            throw e;
+        }
+            catch (Exception ex) {
+            throw new DeleteDataException(env.getProperty("db.notify.delete_fail"));
+        }
+    }
+
     @PutMapping("/{id}/")
     public ResponseEntity<ModelResponse> updateProperty(@RequestBody @Valid Property property,
                                                         @PathVariable Integer id
@@ -80,17 +148,15 @@ public class PropertyAPI {
             throw new BindException(result);
         }
         Property existProperty = propertyService.findById(id);
-        if (existProperty == null) {
-            throw new NotFoundException(env.getProperty("db.notify.not_found"));
-        }
         Location existingLocation = existProperty.getLocation();
         Location updatedLocation = property.getLocation();
         existingLocation.setCity(updatedLocation.getCity());
         existingLocation.setDistrict(updatedLocation.getDistrict());
         existingLocation.setStreet(updatedLocation.getStreet());
         mapper.map(property, existProperty);
+        existProperty.setLocation(existingLocation);
         try {
-            Property saveProperty = propertyService.addProperty(property);
+            Property saveProperty = propertyService.updateProperty(existProperty);
             return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                     saveProperty), HttpStatus.OK);
         } catch (Exception exception) {
@@ -98,30 +164,38 @@ public class PropertyAPI {
         }
     }
 
-
-    @DeleteMapping("/{id}/")
-    public ResponseEntity<ModelResponse> deleteProperty(@PathVariable Integer id) {
-        try {
-            propertyService.softDeletePropertyById(id);
-            return new ResponseEntity<>(
-                    new ModelResponse(env.getProperty("api.notify.success"), null)
-                    , HttpStatus.NO_CONTENT);
-        } catch (Exception ex) {
-            throw new DeleteDataException(env.getProperty("db.notify.delete_fail"));
+    // Check giờ có thể undeleted
+    @PatchMapping("/undeleted/{id}/")
+    public ResponseEntity<ModelResponse> undeleteProperty(@PathVariable Integer id) throws Exception {
+        try{
+            propertyService.softDeletePropertyById(id, false);
+            return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                    null), HttpStatus.OK);
+        }
+        catch (ForbiddenException | NotFoundException e){
+            throw e;
+        }
+        catch (Exception ex){
+            throw new Exception(env.getProperty("db.notify.delete_fail"));
         }
     }
 
-    @DeleteMapping("/{id}/hard")
-    public ResponseEntity<ModelResponse> hardDeleteProperty(@PathVariable Integer id) {
-        try {
-            propertyService.hardDeletePropertyById(id);
-            return new ResponseEntity<>(
-                    new ModelResponse(env.getProperty("api.notify.success"), null)
-                    , HttpStatus.NO_CONTENT);
-        } catch (Exception ex) {
-            throw new DeleteDataException(env.getProperty("db.notify.delete_fail"));
+
+    @PatchMapping("/active/{id}/")
+    public ResponseEntity<ModelResponse> activeProperty(@PathVariable Integer id
+            , @RequestBody Map<String,Boolean> mapIsActive ) throws Exception {
+        Boolean isActive = mapIsActive.getOrDefault("isActive", false);
+        try{
+            Property property = propertyService.updatePropertyActiveStatus(id, isActive);
+            return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                    property), HttpStatus.OK);
+        }
+        catch (NotFoundException notFoundException){
+            throw notFoundException;
+        }
+        catch (Exception ex){
+            throw new Exception(env.getProperty("api.notify.change_status_fail"));
         }
     }
-
 
 }

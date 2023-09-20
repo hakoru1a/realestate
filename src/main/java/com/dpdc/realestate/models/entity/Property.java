@@ -12,6 +12,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -57,6 +58,8 @@ public class Property implements Serializable {
     @JsonIgnore
     @Column(name = "is_deleted", insertable = false, updatable = false)
     private Boolean isDeleted;
+
+
     @JsonIgnore
     @Column(name = "created_at", insertable = false , updatable = false)
     private Instant createdAt;
@@ -64,5 +67,40 @@ public class Property implements Serializable {
     @JsonIgnore
     @Column(name = "modified_at", insertable = false , updatable = false)
     private Instant modifiedAt;
+
+    public Property(Integer id) {
+        this.id = id;
+    }
+
+    public Property() {
+
+    }
+
+
+
+
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "manageproperty",
+            joinColumns = @JoinColumn(name = "property_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> staffs;
+
+
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "wishlist",
+            joinColumns = @JoinColumn(name = "property_id"),
+            inverseJoinColumns = @JoinColumn(name = "customer_id")
+    )
+    private Set<Property> wishlist;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
 
 }

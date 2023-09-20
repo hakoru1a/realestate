@@ -1,5 +1,6 @@
 package com.dpdc.realestate.service.impl;
 
+import com.dpdc.realestate.handler.EntityCheckHandler;
 import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.models.entity.User;
 import com.dpdc.realestate.repository.CustomerRepository;
@@ -13,13 +14,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.switchuser.SwitchUserGrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
 @Service
+@Transactional
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
@@ -40,6 +45,7 @@ public class UserServiceImpl implements UserService {
         Customer customer = customerRepository.findByUsername(s).orElse(null);
         if (customer != null) {
             Set<GrantedAuthority> authorities = new HashSet<>();
+            authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
             return new org.springframework.security.core.userdetails.User(customer.getUsername(),
                     customer.getPassword(), authorities);
         }
@@ -60,6 +66,9 @@ public class UserServiceImpl implements UserService {
             // Trả về true nếu username đã tồn tại cho người dùng khác, ngược lại trả về false
             User currentUser = getCurrentUser();
             Optional<User> existingUser = userRepository.findByUsername(username);
+            if (currentUser == null){
+                return existingUser.isPresent();
+            }
             return existingUser.isPresent()
                     && !existingUser.get().getId().equals(currentUser.getId()); // Trùng lặp với người dùng khác
         } else {
@@ -79,6 +88,9 @@ public class UserServiceImpl implements UserService {
             // Trả về true nếu số điện thoại đã tồn tại cho người dùng khác, ngược lại trả về false
             User currentUser = getCurrentUser();
             Optional<User> existingUser = userRepository.findByPhone(phone);
+            if (currentUser == null){
+                return existingUser.isPresent();
+            }
             return existingUser.isPresent()
                     && !existingUser.get().getId().equals(currentUser.getId()); // Trùng lặp với người dùng khác
         } else {
@@ -95,6 +107,9 @@ public class UserServiceImpl implements UserService {
             // Trả về true nếu email đã tồn tại cho người dùng khác, ngược lại trả về false
             User currentUser = getCurrentUser();
             Optional<User> existingUser = userRepository.findByEmail(email);
+            if (currentUser == null){
+                return existingUser.isPresent();
+            }
             return existingUser.isPresent()
                     && !existingUser.get().getId().equals(currentUser.getId()); // Trùng lặp với người dùng khác
         } else {
@@ -116,6 +131,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updatePassword(Integer id, String newPassword) {
+        EntityCheckHandler.checkEntityExistById(userRepository, id);
         int updated = userRepository.updatePasswordById(id, newPassword);
         if (updated > 0) {
             return findById(id);
@@ -124,9 +140,10 @@ public class UserServiceImpl implements UserService {
     }
     @Override
     public User updateStatus(Integer id, Boolean isActive) {
+        EntityCheckHandler.checkEntityExistById(userRepository, id);
         int updated = userRepository.updateActiveStatusById(id, isActive);
         if (updated > 0) {
-            return findById(id);
+            return userRepository.findById(id).get();
         }
         return null;
     }

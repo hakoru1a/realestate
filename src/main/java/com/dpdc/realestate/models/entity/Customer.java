@@ -1,5 +1,6 @@
 package com.dpdc.realestate.models.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,6 +8,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.Instant;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -27,6 +29,8 @@ public class Customer {
     @Column(name = "username", nullable = false)
     private String username;
 
+
+    @JsonIgnore
     @Size(max = 255)
     @NotNull
     @Column(name = "password", nullable = false)
@@ -74,4 +78,24 @@ public class Customer {
     @Column(name = "modified_at")
     private Instant modifiedAt;
 
+
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "wishlist",
+            joinColumns = @JoinColumn(name = "customer_id"),
+            inverseJoinColumns = @JoinColumn(name = "property_id")
+    )
+    private Set<Property> wishlist;
+
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
+    private Set<Property> properties;
+
+    public Customer() {
+    }
+    public Customer(Integer id) {
+        this.id = id;
+    }
 }
