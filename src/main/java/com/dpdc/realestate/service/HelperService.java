@@ -23,5 +23,5 @@ public interface HelperService {
 //    Mail service
 
 
-    void sendMail(Mail mail, Map<String, String> model);
+    void sendMail(Mail mail, Map<String, String> model, String pathMail);
 }

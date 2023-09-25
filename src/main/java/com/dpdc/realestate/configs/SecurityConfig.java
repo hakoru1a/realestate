@@ -55,19 +55,44 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable()
                 .authorizeRequests()
+                // Property
                 .antMatchers(HttpMethod.POST, "/api/properties/").hasRole("CUSTOMER")
-                .antMatchers(HttpMethod.GET, "/api/properties/my-property/{id}/").hasRole("CUSTOMER") // id là id customer
-                .antMatchers(HttpMethod.DELETE, "/api/properties/hard/{id}/").hasRole("ADMIN")
-                .antMatchers(HttpMethod.POST, "/api/properties/assign/{id}/").hasRole("ADMIN")
-                .antMatchers(HttpMethod.DELETE, "/api/properties/{id}/").hasAnyRole("CUSTOMER", "ADMIN")
-                .antMatchers(HttpMethod.PUT, "/api/properties/{id}/").hasAnyRole("CUSTOMER", "ADMIN")
-                .antMatchers(HttpMethod.PATCH, "/api/properties/undeleted/{id}/").hasAnyRole("CUSTOMER", "ADMIN")
-                .antMatchers(HttpMethod.PATCH, "/api/properties/active/{id}/").hasAnyRole("ADMIN", "STAFF")
+                .antMatchers(HttpMethod.GET, "/api/properties/my-property/{customerId}/").hasRole("CUSTOMER") // id là id customer
+                .antMatchers(HttpMethod.DELETE, "/api/properties/hard/{propertyId}/").hasRole("ADMIN")
+                .antMatchers(HttpMethod.POST, "/api/properties/assign/{propertyId}/").hasRole("ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/api/properties/{propertyId}/").hasAnyRole("CUSTOMER", "ADMIN")
+                .antMatchers(HttpMethod.PUT, "/api/properties/{propertyId}/").hasAnyRole("CUSTOMER", "ADMIN")
+                .antMatchers(HttpMethod.PATCH, "/api/properties/undeleted/{propertyId}/").hasAnyRole("CUSTOMER", "ADMIN")
+                .antMatchers(HttpMethod.PATCH, "/api/properties/active/{propertyId}/").hasAnyRole("ADMIN", "STAFF")
+                // Comments
+                .antMatchers(HttpMethod.POST, "/api/comments/{propertyId}/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.DELETE, "/api/comments/{commentId}/").hasAnyRole("CUSTOMER", "ADMIN")
+                // Reviews
+                .antMatchers(HttpMethod.POST, "/api/reviews/{staffId}/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.GET, "/api/reviews/{staffId}/").hasAnyRole("ADMIN", "STAFF")
+                .antMatchers(HttpMethod.DELETE, "/api/reviews/{staffId}/").hasRole("ADMIN")
+                // Packages
+                .antMatchers(HttpMethod.POST, "/api/packages/").hasRole("ADMIN")
+                .antMatchers(HttpMethod.PUT, "/api/packages/").hasRole("ADMIN")
+                .antMatchers(HttpMethod.GET, "/api/packages/").hasAnyRole("CUSTOMER", "ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/api/packages/{packageId}/").hasRole("ADMIN")
+                // Register Packages
+                .antMatchers(HttpMethod.POST, "/api/register-package/bill/{customerId}/").hasRole("CUSTOMER")
+                // Payment
+                .antMatchers(HttpMethod.POST, "/api/payment/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.GET, "/api/payment/{customerId}/").hasAnyRole("CUSTOMER", "ADMIN")
+                // Blog
+                .antMatchers(HttpMethod.POST, "/api/blogs/").hasAnyRole("STAFF", "ADMIN")
+                .antMatchers(HttpMethod.PATCH, "/api/blogs/publish/{blogId}/").hasRole("ADMIN")
+                .antMatchers(HttpMethod.PUT, "/api/blogs/{blogId}/").hasRole("ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/api/blogs/{blogId}/").hasRole("ADMIN")
+
                 .anyRequest().permitAll() // All other endpoints are open to all users
                 .and().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
     }
+
 
 
 

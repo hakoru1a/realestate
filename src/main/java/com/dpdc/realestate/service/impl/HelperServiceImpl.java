@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.twilio.rest.api.v2010.account.Message;
@@ -112,7 +113,7 @@ public class HelperServiceImpl implements HelperService {
 
     @Override
     @Async
-    public void sendMail(Mail mail, Map<String, String> model){
+    public void sendMail(Mail mail, Map<String, String> model, String pathMail){
         MimeMessage message = javaMailSender.createMimeMessage();
         try {
             // set mediaType
@@ -120,15 +121,17 @@ public class HelperServiceImpl implements HelperService {
                     message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
                     StandardCharsets.UTF_8.name());
             // add attachment
-            helper.addAttachment("logo.png", new ClassPathResource("logo.png"));
+//            helper.addAttachment("logo.png", new ClassPathResource("logo.png"));
 
-            Template t = config.getTemplate("email-template.ftl");
+//            Template t = config.getTemplate("email-template.ftl");
+//            Template t = config.getTemplate("active-account.ftl");
+            Template t = config.getTemplate(pathMail);
+            model.put("logo", env.getProperty("app.logo"));
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(t, model);
-
             helper.setTo(mail.getToMail());
             helper.setText(html, true);
             helper.setSubject(mail.getSubject());
-            helper.setFrom(env.getProperty("spring.mail.username"));
+            helper.setFrom(Objects.requireNonNull(env.getProperty("spring.mail.username")));
             javaMailSender.send(message);
 
         } catch (MessagingException | IOException | TemplateException ex) {

@@ -32,12 +32,12 @@ public class SwaggerConfig {
     }
     private ApiInfo apiInfo() {
         return new ApiInfo(
-                "ECOM OPEN MARKET",
-                "REST APIs For Ecommerce Web Application.",
+                "HOME CONNECT",
+                "REST APIs for Real Estate Web Application",
                 "API v1",
                 "Terms of service",
-                new Contact("Thu Nguyen Van", "https://github.com/thuvan2512",
-                        "thunguyenvan2512@gmail.com"),
+                new Contact("chuongdinh2202@gmail.com", "https://github.com",
+                        "chuongdinh2202@gmail@gmail.com"),
                 "License of API", "API license URL", Collections.emptyList());
     }
 }

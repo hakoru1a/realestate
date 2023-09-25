@@ -43,6 +43,15 @@ public class CustomerServiceImpl implements CustomerService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return findByUsername(authentication.getName()).orElse(null);
     }
+
+    @Override
+    public void activeByUsername(String username) {
+        Customer customer = customerRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException(env.getProperty("db.notify.not_found")));
+        customer.setIsActive(true);
+        customerRepository.save(customer);
+    }
+
     @Override
     public boolean isExistByUsername(String username, boolean isExcept) {
         if (isExcept) {

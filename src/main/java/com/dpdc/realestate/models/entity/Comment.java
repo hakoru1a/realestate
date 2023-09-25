@@ -1,9 +1,11 @@
 package com.dpdc.realestate.models.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.time.Instant;
 
 @Getter
@@ -23,10 +25,12 @@ public class Comment {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id")
     private Property property;
 
+    @NotEmpty(message = "comment text not empty")
     @Lob
     @Column(name = "comment")
     private String comment;
@@ -38,7 +42,5 @@ public class Comment {
     private Instant modifiedAt;
 
 
-    @Column(name = "user_id")
-    private Integer userId;
 
 }

@@ -46,7 +46,8 @@ public class HelperAPI {
         Map<String, String> model = new HashMap<>();
         model.put("Name", "Chương");
         model.put("location", "Bangalore,India");
-        helperService.sendMail(mail, model);
+        // Test send mail
+        helperService.sendMail(mail, model, env.getProperty("app.active_account"));
     }
     @PostMapping
     @RequestMapping("/upload-image/") // Test postman có jpg

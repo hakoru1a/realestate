@@ -8,6 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BindException;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,9 @@ import java.util.Map;
         "com.dpdc"
 })
 public class RestResponseEntityExceptionHandler {
+
+    @Autowired
+    private Environment env;
     private final String error = "Handle request failure";
 
     @ExceptionHandler(value = {Exception.class, SaveDataException.class})
@@ -49,6 +53,16 @@ public class RestResponseEntityExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(value = {BodyBadRequestException.class, RejectException.class})
+    public ResponseEntity<ModelResponse> handleBodyBadRequestException(BodyBadRequestException ex) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = {HttpMessageNotReadableException.class})
+    public ResponseEntity<ModelResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
+    }
+
 
 //    Xử lý binding spring validation
     @ExceptionHandler(BindException.class)
@@ -69,7 +83,7 @@ public class RestResponseEntityExceptionHandler {
     @ExceptionHandler(DataAlreadyExistException.class)
     protected ResponseEntity<ModelResponse> handleDataAlreadyExistException(DataAlreadyExistException ex) {
         Map<String, String> errors = ex.getErrors();
-        ModelResponse response = new ModelResponse(error, errors);
+        ModelResponse response = new ModelResponse(env.getProperty("api.notify.already_exist"), errors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

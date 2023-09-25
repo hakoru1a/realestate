@@ -1,5 +1,6 @@
 package com.dpdc.realestate.repository;
 
+import com.dpdc.realestate.models.entity.Comment;
 import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.models.entity.Property;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -37,5 +39,7 @@ public interface PropertyRepository extends JpaRepository<Property, Integer>,
     Page<Property> findAllPropertiesInWishlistByCustomerId(@Param("customerId") Integer customerId,
                                                            Pageable pageable);
 
+
+    Optional<Comment> findByCustomerAndId(Customer customer, Integer id);
 
 }

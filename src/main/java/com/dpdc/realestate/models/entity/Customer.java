@@ -69,15 +69,17 @@ public class Customer {
     @Column(name = "occupation")
     private String occupation;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active" , insertable = false)
     private Boolean isActive;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false)
     private Instant createdAt;
 
-    @Column(name = "modified_at")
+    @Column(name = "modified_at", insertable = false)
     private Instant modifiedAt;
 
+    @Column(name = "times", insertable = false)
+    private Integer times;
 
     @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
@@ -93,9 +95,16 @@ public class Customer {
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
     private Set<Property> properties;
 
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
+    private Set<Comment> comments;
+
     public Customer() {
     }
     public Customer(Integer id) {
         this.id = id;
     }
+
+
 }

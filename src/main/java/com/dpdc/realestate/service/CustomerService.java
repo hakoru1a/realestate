@@ -25,4 +25,6 @@ public interface CustomerService {
     Customer updateStatus (Integer id, Boolean isActive);
 
     Customer getCurrentCredential();
+
+    void activeByUsername(String username);
 }

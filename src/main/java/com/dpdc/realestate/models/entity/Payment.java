@@ -1,5 +1,6 @@
 package com.dpdc.realestate.models.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +14,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "payment", schema = "realestate", indexes = {
-        @Index(name = "transaction_id", columnList = "transaction_id")
+        @Index(name = "customerpackageregistration_id", columnList = "customerpackageregistration_id")
 })
 public class Payment {
     @Id
@@ -21,16 +22,15 @@ public class Payment {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "transaction_id")
-    private Transaction transaction;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "customerpackageregistration_id")
+    private CustomerPackageRegistration customerPackageRegistration;
 
     @NotNull
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
-    @NotNull
-    @Column(name = "payment_date", nullable = false)
+    @Column(name = "payment_date")
     private Instant paymentDate;
 
     @Size(max = 255)

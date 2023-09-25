@@ -79,7 +79,7 @@ public class PropertyServiceImpl implements PropertyService {
         if (authentication.getAuthorities().stream().anyMatch(auth ->
                 "ROLE_CUSTOMER".equals(auth.getAuthority()))){
             Customer customer = customerService.getCurrentCredential();
-            if (customer.getProperties().stream().noneMatch(p -> p.getId().equals(property.getId()))) {
+            if (propertyRepository.findByCustomerAndId(customer, property.getId()).isEmpty()) {
                 throw new ForbiddenException("Access denied: Property does not belong to the current customer");
             }
         }

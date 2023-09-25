@@ -1,5 +1,6 @@
 package com.dpdc.realestate.models.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,8 +21,10 @@ public class Blog {
     @Column(name = "id", nullable = false)
     private Integer id;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
     @Size(max = 255)
@@ -29,17 +32,21 @@ public class Blog {
     @Column(name = "title", nullable = false)
     private String title;
 
+    @Column(name = "is_publish", insertable = false)
+    private Boolean isPublish;
+
+    @NotNull
     @Lob
     @Column(name = "content")
     private String content;
 
-    @Column(name = "publish_date")
+    @Column(name = "publish_date", insertable = false)
     private Instant publishDate;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false)
     private Instant createdAt;
 
-    @Column(name = "modified_at")
+    @Column(name = "modified_at", insertable = false)
     private Instant modifiedAt;
 
 }

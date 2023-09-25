@@ -2,6 +2,7 @@ package com.dpdc.realestate.models.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -20,6 +21,7 @@ import java.util.Set;
         @Index(name = "phone", columnList = "phone", unique = true),
         @Index(name = "role_id", columnList = "role_id")
 })
+@NoArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -91,6 +93,9 @@ public class User {
     )
     private Set<Property> propertyManage;
 
+    public User(Integer id) {
+        this.id = id;
+    }
 
 
 //    @JsonIgnore

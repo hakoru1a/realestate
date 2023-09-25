@@ -20,4 +20,5 @@ public class EntityCheckHandler {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(env.getProperty("db.notify.not_found")));
     }
+
 }

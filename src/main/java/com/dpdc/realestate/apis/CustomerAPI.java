@@ -3,11 +3,14 @@ package com.dpdc.realestate.apis;
 import com.dpdc.realestate.dto.ModelResponse;
 import com.dpdc.realestate.dto.request.ChangePassword;
 import com.dpdc.realestate.dto.request.CredentialRegister;
+import com.dpdc.realestate.dto.request.Mail;
 import com.dpdc.realestate.dto.request.ProfileCustomer;
 import com.dpdc.realestate.exception.DataAlreadyExistException;
 import com.dpdc.realestate.exception.PasswordException;
+import com.dpdc.realestate.jwt.JwtTokenUtils;
 import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.service.CustomerService;
+import com.dpdc.realestate.service.HelperService;
 import com.dpdc.realestate.service.UserService;
 import com.dpdc.realestate.service.ValidationService;
 import org.modelmapper.ModelMapper;
@@ -15,11 +18,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -41,7 +48,29 @@ public class CustomerAPI {
     private ValidationService validationService;
 
     @Autowired
+    private JwtTokenUtils jwtTokenUtils;
+
+    @Autowired
+    private HelperService helperService;
+
+    @Autowired
     private Environment env;
+
+    @GetMapping("/{token}/")
+    public ResponseEntity<ModelResponse> activeCustomer(@PathVariable String token){
+        String username = jwtTokenUtils.getUsernameFromToken(token);
+        customerService.activeByUsername(username);
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                username), HttpStatus.OK);
+    }
+    @GetMapping("/active/{username}/")
+    public ResponseEntity<ModelResponse> activeCustomerForAdmin(@PathVariable String username){
+        customerService.activeByUsername(username);
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                username), HttpStatus.OK);
+    }
     @PostMapping
     public ResponseEntity<ModelResponse> registerUser(@RequestBody @Valid CredentialRegister credential
             , BindingResult result) throws Exception{
@@ -52,8 +81,17 @@ public class CustomerAPI {
         try {
             Customer newCustomer = mapper.map(credential,Customer.class);
             Customer savedCustomer = customerService.register(newCustomer);
+            UserDetails userDetails = userService.loadUserByUsername(savedCustomer.getUsername());
+            // Send mail to active
+            String token = jwtTokenUtils.generateToken(userDetails, false);
+            Mail mail = new Mail("Active your account", "Kich hoạt tại khoản",
+                    "2051052012chuong@ou.edu.vn");
+            Map<String, String> map = new HashMap<>();
+            map.put("token", token);
+            helperService.sendMail(mail,map, env.getProperty("app.active_account"));
             return new
-                    ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedCustomer), HttpStatus.OK);
+                    ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                    savedCustomer), HttpStatus.OK);
         }
         catch (Exception ex){
             throw new Exception();
@@ -100,5 +138,7 @@ public class CustomerAPI {
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                 savedCustomer), HttpStatus.OK);
     }
+
+
 
 }
