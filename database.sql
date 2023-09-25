@@ -45,6 +45,7 @@ CREATE TABLE Customer (
     gender ENUM('Male', 'Female', 'Other'),
     address TEXT,
     avatar TEXT,
+    times INT default 1, 
     occupation VARCHAR(255),
     is_active BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -54,29 +55,26 @@ CREATE TABLE Customer (
 
 
 -- Create the ServicePackage table with snake_case column names
-CREATE TABLE ServicePackage (
-    package_id INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE Package (
+    id INT PRIMARY KEY AUTO_INCREMENT,
     package_name VARCHAR(255) NOT NULL,
+    times INT default 1, 
     description TEXT,
     price DECIMAL(10, 2) NOT NULL,
-    duration_in_months INT NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Create the CustomerServiceRegistration table with snake_case column names
-CREATE TABLE CustomerServiceRegistration (
+CREATE TABLE CustomerPackageRegistration (
     id INT PRIMARY KEY AUTO_INCREMENT,
     customer_id INT,
-    service_package_id INT,
-    registration_date TIMESTAMP NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    package_id INT,
+    quantity INT DEFAULT 0,
+    registration_date  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY unique_customer_service (id),
     FOREIGN KEY (customer_id) REFERENCES Customer(id),
-    FOREIGN KEY (service_package_id) REFERENCES ServicePackage(package_id)
+    FOREIGN KEY (package_id) REFERENCES Package(id)
 );
 
 -- Create the Location table with snake_case column names
@@ -138,7 +136,8 @@ CREATE TABLE Blog (
     user_id INT,
     title VARCHAR(255) NOT NULL,
     content TEXT,
-    publish_date TIMESTAMP,
+    is_publish boolean default 0,
+    publish_date TIMESTAMP ,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES User(id)
@@ -159,7 +158,6 @@ CREATE TABLE Documents (
 CREATE TABLE Comment (
     id INT PRIMARY KEY AUTO_INCREMENT,
     customer_id INT,
-    user_id INT,
     property_id INT,
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -244,16 +242,15 @@ CREATE TABLE Media (
 -- Create the Payment table with snake_case column names
 CREATE TABLE Payment (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    transaction_id INT,
+    customerpackageregistration_id INT,
     amount DECIMAL(10, 2) NOT NULL,
     payment_date TIMESTAMP NOT NULL,
     payment_method VARCHAR(255),
-    payment_status VARCHAR(255),
+    payment_status VARCHAR(255) DEFAULT "DEACTIVE",
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (transaction_id) REFERENCES Transaction(id)
+    FOREIGN KEY (customerpackageregistration_id) REFERENCES CustomerPackageRegistration(id)
 );
-
 
 
 -- Insert data
@@ -271,7 +268,11 @@ INSERT INTO `realestate`.`user` (`Username`, `Password`, `Role_ID`, `FullName`, 
 INSERT INTO `realestate`.`customer` (`Username`, `Password`, `FullName`, `Email`, `Phone`) VALUES ('chuongdp', '$2a$10$ktndSh0vIJ4B2jdV82ea8.bv2CPjpMU28hf2oNSfGOxIaLeXfXnjS', 'Đình Chương', 'chu@gmail.com', '0334436233');
 
 
-
 -- Category
 INSERT INTO `realestate`.`category` (`category_name`) VALUES ('Nhà thuê');
 
+-- Package
+
+INSERT INTO `realestate`.`package` (`package_name`, `times`, `price`) VALUES ('GÓI 1', '1', '100');
+INSERT INTO `realestate`.`package` (`package_name`, `times`, `price`) VALUES ('GÓI 2', '2', '200');
+INSERT INTO `realestate`.`package` (`package_name`, `times`, `price`) VALUES ('GÓI 3', '3', '300');
