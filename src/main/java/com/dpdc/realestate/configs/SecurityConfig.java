@@ -101,7 +101,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/appointments/staff/").hasRole("STAFF")
                 .antMatchers(HttpMethod.POST, "/api/appointments/{appointmentId}/{staffId}/staff/").hasRole("STAFF")
 
-
                 .anyRequest().permitAll() // All other endpoints are open to all users
                 .and().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
