@@ -5,6 +5,7 @@ import com.dpdc.realestate.dto.ModelResponse;
 import com.dpdc.realestate.exception.BodyBadRequestException;
 import com.dpdc.realestate.exception.NotFoundException;
 import com.dpdc.realestate.models.entity.Payment;
+import com.dpdc.realestate.models.entity.PaymentData;
 import com.dpdc.realestate.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -17,6 +18,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/payment/")
@@ -27,10 +29,8 @@ public class PaymentAPI {
     private Environment env;
 
     @GetMapping("/{customerId}/")
-    public ResponseEntity<ModelResponse> getPayment(@RequestParam(defaultValue = "1")
-                                                        String page, @PathVariable Integer customerId){
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1 , Integer.parseInt(env.getProperty("app.page.size")));
-        Page<Payment> payments = paymentService.getPayments(customerId,pageable);
+    public ResponseEntity<ModelResponse> getPayment( @PathVariable Integer customerId){
+        Set<PaymentData> payments = paymentService.getPayments(customerId);
         return new
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), payments),
                 HttpStatus.OK);

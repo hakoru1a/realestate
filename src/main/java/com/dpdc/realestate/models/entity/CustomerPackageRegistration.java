@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.time.Instant;
 
 @Getter
@@ -26,6 +25,10 @@ public class CustomerPackageRegistration {
     private Customer customer;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "payment_id")
+    private Payment payment;
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "package_id")
     private Package servicePackage;
 
@@ -34,7 +37,7 @@ public class CustomerPackageRegistration {
     private Integer quantity;
 
 
-    @Column(name = "registration_date",  insertable = false)
+    @Column(name = "registration_date",  insertable = false, updatable = false)
     private Instant registrationDate;
 
 

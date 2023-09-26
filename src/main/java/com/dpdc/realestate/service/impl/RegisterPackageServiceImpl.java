@@ -71,32 +71,10 @@ public class RegisterPackageServiceImpl implements RegisterPackageService {
     @Override
     public CustomerPackageRegistration  savePackageRegister
             ( Integer packageId,Integer customerId,Integer quantity){
-        Instant startDateOfCurrentMonth = getStartDateOfCurrentMonth();
-        Instant endDateOfCurrentMonth = getEndDateOfCurrentMonth();
-        // Kiểm tra xem khách hàng đã đăng ký gói này chưa
-        // Trừ cái package 1 ra
-        Package pack = EntityCheckHandler.checkEntityExistById(packageRepository, packageId);
-        Customer customer  = EntityCheckHandler.checkEntityExistById(customerRepository, customerId);
-
-        CustomerPackageRegistration existingRegistration = registerPackageRepository
-                .findByCustomerAndServicePackageAndRegistrationDateBetween(
-                        customer,
-                        pack,
-                        startDateOfCurrentMonth,
-                        endDateOfCurrentMonth);
-
-        // Xử lý tạo mới hoặc cập nhật gói dịch vụ
-        if (existingRegistration != null) {
-            // Cập nhật số lượng và lưu thông tin
-            int newQuantity = existingRegistration.getQuantity() + quantity;
-            existingRegistration.setQuantity(newQuantity);
-            return registerPackageRepository.save(existingRegistration);
-        } else {
-            // Tạo một bản ghi mới
             CustomerPackageRegistration registration = getCustomerPackageRegistration(
                     packageId, customerId, quantity);
             return registerPackageRepository.save(registration);
-        }
+
     }
 
 

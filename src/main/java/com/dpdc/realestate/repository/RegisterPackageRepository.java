@@ -13,11 +13,12 @@ import java.time.Instant;
 @Repository
 public interface RegisterPackageRepository extends JpaRepository<CustomerPackageRegistration, Integer> {
 
-    @Query("SELECT SUM(cpr.quantity) FROM CustomerPackageRegistration cpr " +
+    @Query("SELECT SUM(cpr.quantity) " +
+            "FROM CustomerPackageRegistration cpr " +
             "WHERE cpr.customer.id = :customerId " +
-            "AND cpr.servicePackage.id <> 1 " +  // Thêm dấu cách sau điều kiện này
+            "AND cpr.servicePackage.id <> 1 " +
             "AND cpr.registrationDate >= :startDate " +
-            "AND cpr.registrationDate <= :endDate")
+            "AND cpr.registrationDate <= :endDate ")
     Integer sumQuantityByCustomerIdAndDateRange(@Param("customerId") Integer customerId,
                                                 @Param("startDate") Instant startDate,
                                                 @Param("endDate") Instant endDate);

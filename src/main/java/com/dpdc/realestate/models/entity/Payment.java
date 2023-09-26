@@ -14,7 +14,7 @@ import java.time.Instant;
 @Setter
 @Entity
 @Table(name = "payment", schema = "realestate", indexes = {
-        @Index(name = "customerpackageregistration_id", columnList = "customerpackageregistration_id")
+        @Index(name = "customer_id", columnList = "customer_id")
 })
 public class Payment {
     @Id
@@ -23,8 +23,8 @@ public class Payment {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "customerpackageregistration_id")
-    private CustomerPackageRegistration customerPackageRegistration;
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     @NotNull
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
@@ -32,6 +32,12 @@ public class Payment {
 
     @Column(name = "payment_date")
     private Instant paymentDate;
+
+    @NotNull
+    @Size(max = 255)
+    @Column(name = "type")
+    private String type;
+
 
     @Size(max = 255)
     @Column(name = "payment_method")
