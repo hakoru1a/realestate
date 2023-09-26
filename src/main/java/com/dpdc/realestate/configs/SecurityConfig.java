@@ -79,13 +79,28 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // Register Packages
                 .antMatchers(HttpMethod.POST, "/api/register-package/bill/{customerId}/").hasRole("CUSTOMER")
                 // Payment
-                .antMatchers(HttpMethod.POST, "/api/payment/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.POST, "/api/payment/buy-turn/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.POST, "/api/payment/booking/").hasRole("CUSTOMER")
                 .antMatchers(HttpMethod.GET, "/api/payment/{customerId}/").hasAnyRole("CUSTOMER", "ADMIN")
                 // Blog
                 .antMatchers(HttpMethod.POST, "/api/blogs/").hasAnyRole("STAFF", "ADMIN")
                 .antMatchers(HttpMethod.PATCH, "/api/blogs/publish/{blogId}/").hasRole("ADMIN")
                 .antMatchers(HttpMethod.PUT, "/api/blogs/{blogId}/").hasRole("ADMIN")
                 .antMatchers(HttpMethod.DELETE, "/api/blogs/{blogId}/").hasRole("ADMIN")
+                // Appointment for customer
+                .antMatchers(HttpMethod.GET, "/api/appointments/{customerId}/").authenticated()
+                .antMatchers(HttpMethod.GET, "/api/appointments/{customerId}/history/").authenticated()
+                .antMatchers(HttpMethod.PATCH, "/api/appointments/{customerId}/{appointmentId}/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.PUT, "/api/appointments/{customerId}/{appointmentId}/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.POST, "/api/appointments/{appointmentId}/").hasRole("CUSTOMER")
+                .antMatchers(HttpMethod.DELETE, "/api/appointments/{appointmentId}/{customerId}/").hasRole("CUSTOMER")
+                // Appointment for staff
+                .antMatchers(HttpMethod.GET, "/api/appointments/").hasRole("STAFF")
+                .antMatchers(HttpMethod.GET, "/api/appointments/{staffId}/staff/").hasRole("STAFF")
+                .antMatchers(HttpMethod.GET, "/api/appointments/staff/").hasRole("STAFF")
+                .antMatchers(HttpMethod.POST, "/api/appointments/staff/").hasRole("STAFF")
+                .antMatchers(HttpMethod.POST, "/api/appointments/{appointmentId}/{staffId}/staff/").hasRole("STAFF")
+
 
                 .anyRequest().permitAll() // All other endpoints are open to all users
                 .and().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()

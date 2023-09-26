@@ -53,16 +53,20 @@ public class RestResponseEntityExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(value = {BodyBadRequestException.class, RejectException.class})
+    @ExceptionHandler(value = {BodyBadRequestException.class})
     public ResponseEntity<ModelResponse> handleBodyBadRequestException(BodyBadRequestException ex) {
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(value = {RejectException.class})
+    public ResponseEntity<ModelResponse> handleRejectException(RejectException ex) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
+    }
+
 
     @ExceptionHandler(value = {HttpMessageNotReadableException.class})
     public ResponseEntity<ModelResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
     }
-
 
 //    Xử lý binding spring validation
     @ExceptionHandler(BindException.class)

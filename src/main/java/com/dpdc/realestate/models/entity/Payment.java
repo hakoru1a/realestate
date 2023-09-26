@@ -1,7 +1,9 @@
 package com.dpdc.realestate.models.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -16,6 +18,7 @@ import java.time.Instant;
 @Table(name = "payment", schema = "realestate", indexes = {
         @Index(name = "customer_id", columnList = "customer_id")
 })
+@NoArgsConstructor
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,9 +46,6 @@ public class Payment {
     @Column(name = "payment_method")
     private String paymentMethod;
 
-    @Size(max = 255)
-    @Column(name = "payment_status")
-    private String paymentStatus;
 
     @Column(name = "created_at")
     private Instant createdAt;
@@ -53,4 +53,7 @@ public class Payment {
     @Column(name = "modified_at")
     private Instant modifiedAt;
 
+    public Payment(Integer id) {
+        this.id = id;
+    }
 }

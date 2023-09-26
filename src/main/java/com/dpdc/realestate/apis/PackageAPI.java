@@ -42,7 +42,7 @@ public class PackageAPI {
 
 
     @PostMapping
-    public ResponseEntity<ModelResponse> addPackage(@RequestBody @Valid Package pack,
+    public ResponseEntity<ModelResponse> createPackage(@RequestBody @Valid Package pack,
                                                     BindingResult result) throws Exception {
         try{
             if (result.hasErrors()) {

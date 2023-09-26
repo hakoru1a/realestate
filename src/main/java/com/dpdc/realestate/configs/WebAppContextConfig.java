@@ -1,9 +1,6 @@
 package com.dpdc.realestate.configs;
 
-import com.dpdc.realestate.formatter.CategoryFormatter;
-import com.dpdc.realestate.formatter.CustomerFormatter;
-import com.dpdc.realestate.formatter.PropertyFormatter;
-import com.dpdc.realestate.formatter.UserFormatter;
+import com.dpdc.realestate.formatter.*;
 import com.dpdc.realestate.models.entity.Property;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
@@ -63,17 +60,15 @@ public class WebAppContextConfig implements WebMvcConfigurer {
 
     @Override
     public void addFormatters(FormatterRegistry registry) {
-
         registry.addFormatter(new CategoryFormatter());
         registry.addFormatter(new PropertyFormatter());
         registry.addFormatter(new CustomerFormatter());
         registry.addFormatter(new UserFormatter());
-
+        registry.addFormatter(new PaymentFormatter());
 
     }
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Đăng ký một đường dẫn URL tùy chỉnh cho tài nguyên tĩnh
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("classpath:/static/");
     }

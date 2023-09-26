@@ -13,10 +13,9 @@ import java.util.Set;
 
 
 public interface PaymentRepository extends JpaRepository<Payment, Integer> {
-    Page<Payment> findByCustomerId(Integer customerId, Pageable pageable);
 
-    @Query("SELECT new com.dpdc.realestate.models.entity.PaymentData(p.amount, " +
-            "p.paymentStatus, " +
+    @Query("SELECT new com.dpdc.realestate.models.entity.PaymentData(" +
+            "p.amount, " +
             "p.paymentDate, " +
             "cp.servicePackage.id, " +
             "cp.quantity) " +

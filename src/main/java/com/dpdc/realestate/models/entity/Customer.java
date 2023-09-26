@@ -104,6 +104,11 @@ public class Customer {
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
     private Set<CustomerPackageRegistration>  customerPackageRegistrations;
 
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
+    private Set<Appointment>  appointments;
+
     public Customer() {
     }
     public Customer(Integer id) {

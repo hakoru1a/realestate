@@ -14,7 +14,6 @@ import java.time.Instant;
 public class PaymentData {
 
     private BigDecimal paymentAmount;
-    private String paymentStatus;
     private Instant paymentDate;
     private Integer packageId;
     private Integer quantity;

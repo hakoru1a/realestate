@@ -1,9 +1,13 @@
 package com.dpdc.realestate.models.entity;
 
+import com.dpdc.realestate.validator.anotation.FutureWeek;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.time.Instant;
 
 @Getter
@@ -20,28 +24,38 @@ public class Appointment {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "property_id")
     private Property property;
 
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "payment_id")
+    private Payment payment;
+
+    @FutureWeek
     @Column(name = "appointment_date")
     private Instant appointmentDate;
 
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @Column(name = "is_cancel", insertable = false)
+    private Boolean isCancel;
 
-    @Column(name = "created_at")
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "modified_at")
+    @Column(name = "modified_at", insertable = false, updatable = false)
     private Instant modifiedAt;
 
 }
