@@ -12,10 +12,11 @@ public class JwtResponse implements Serializable {
 
     private final String accessToken;
 
-
     private final String refreshToken;
 
     private final String expirationDate;
+
+
 
     public JwtResponse(String accessToken,String refreshToken, String expirationDate) {
         this.accessToken = accessToken;

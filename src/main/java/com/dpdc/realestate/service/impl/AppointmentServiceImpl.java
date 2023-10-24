@@ -10,6 +10,8 @@ import com.dpdc.realestate.models.entity.User;
 import com.dpdc.realestate.repository.*;
 import com.dpdc.realestate.service.AppointmentService;
 import com.dpdc.realestate.service.CustomerService;
+import com.dpdc.realestate.service.UserService;
+import com.dpdc.realestate.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
@@ -35,9 +37,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     private Environment env;
     @Autowired
     private CustomerRepository customerRepository;
+
+    @Autowired
+    private Utils utils;
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private UserService userService;
 
     @Override
     public Set<Appointment> getAppointments(Integer customerId) {
@@ -55,7 +61,22 @@ public class AppointmentServiceImpl implements AppointmentService {
         Instant nextSunday = nextMonday.plus(7, ChronoUnit.DAYS);
         return appointmentRepository.findByCustomerIdAndAppointmentDateBetween(customerId, nextMonday,nextSunday );
     }
+    @Override
+    public Set<Appointment> getAppointmentsStaff(Integer staffId) {
+        Instant now = Instant.now();
+        User user = userService.getCurrentCredential();
+        if (!user.getId().equals(staffId)){
+            throw new ForbiddenException("Access denied: Appointments does not belong to the current customer");
+        }
+        // Tìm thời điểm bắt đầu của tuần sau (ngày thứ Hai tiếp theo)
+        Instant nextMonday = now.atZone(ZoneId.of("UTC"))
+                .with(TemporalAdjusters.next(DayOfWeek.MONDAY))
+                .toInstant();
 
+        // Tìm thời điểm kết thúc của tuần sau (ngày Chủ Nhật tiếp theo)
+        Instant nextSunday = nextMonday.plus(7, ChronoUnit.DAYS);
+        return appointmentRepository.findByUserIdAndAppointmentDateBetween(staffId, nextMonday,nextSunday);
+    }
     @Override
     public void deleteAppointmentId(Integer appointmentId, Integer customerId) {
         Appointment appointment = isMyAppointment(appointmentId, customerId);
@@ -82,12 +103,27 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    public Set<Appointment> getAppointmentsWithNullUser() {
+        return appointmentRepository.findAppointmentsWithNullUser();
+    }
+
+    @Override
     public Appointment pickupAppointment(Integer appointmentId, Integer staffId) {
         Appointment appointment = EntityCheckHandler.checkEntityExistById(appointmentRepository, appointmentId);
         if (appointment.getIsCancel()){
             throw new RejectException("Lịch đã bị khách hàng cancel chọn lịch khác");
         }
+
         User user =  EntityCheckHandler.checkEntityExistById(userRepository, staffId);
+        // Check conflict staff
+        Set<Appointment> appointments = user.getAppointments();
+        int myShift = Utils.calculateAppointmentShift(appointment.getAppointmentDate());
+        for (Appointment a: appointments){
+            int shift =  Utils.calculateAppointmentShift(a.getAppointmentDate());
+            if (myShift == shift){
+                throw new RejectException("Ngày này đã có lịch");
+            }
+        }
         appointment.setUser(user);
         return appointmentRepository.save(appointment);
     }

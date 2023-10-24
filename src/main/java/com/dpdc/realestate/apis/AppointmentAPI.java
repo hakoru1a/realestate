@@ -3,6 +3,7 @@ package com.dpdc.realestate.apis;
 
 import com.dpdc.realestate.dto.ModelResponse;
 import com.dpdc.realestate.models.entity.Appointment;
+import com.dpdc.realestate.models.entity.Property;
 import com.dpdc.realestate.service.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -13,10 +14,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.Set;
 
 @RestController
 @RequestMapping("/api/appointments/")
+@CrossOrigin
 public class AppointmentAPI {
 
     @Autowired
@@ -47,11 +50,20 @@ public class AppointmentAPI {
 
     @GetMapping("/{staffId}/staff/")
     public ResponseEntity<ModelResponse> getAllAppointmentsByStaffId(
-            @PathVariable Integer staffId,
-            @RequestParam(required = false, defaultValue = "1") String page
+            @PathVariable Integer staffId
+//            @RequestParam(required = false, defaultValue = "1") String page
     ){
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1 , Integer.parseInt(env.getProperty("app.page.size")));
-        Page<Appointment> appointments =  appointmentService.getAppointments(staffId, pageable);
+//        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1 , Integer.parseInt(env.getProperty("app.page.size")));
+        Set<Appointment> appointments =  appointmentService.getAppointmentsStaff(staffId);
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                appointments), HttpStatus.OK);
+    }
+
+    @GetMapping("/staff/not-active/")
+    public ResponseEntity<ModelResponse> getAppointmentNotActive(
+    ){
+        Set<Appointment> appointments = appointmentService.getAppointmentsWithNullUser();
         return new
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                 appointments), HttpStatus.OK);

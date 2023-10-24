@@ -18,13 +18,13 @@ public class FutureWeekValidator implements ConstraintValidator<FutureWeek, Inst
     public boolean isValid(Instant appointmentDate, ConstraintValidatorContext context) {
         try {
             // Đảm bảo rằng appointmentDate đang ở múi giờ UTC
-            Instant utcAppointmentDate = appointmentDate.atZone(ZoneId.of("UTC")).toInstant();
+            Instant utcAppointmentDate = appointmentDate.atZone(ZoneId.of("Etc/GMT+7")).toInstant();
 
             // Lấy ngày hiện tại với múi giờ UTC (GMT)
             Instant now = Instant.now();
 
             // Tìm thời điểm bắt đầu của tuần sau (ngày thứ Hai tiếp theo)
-            Instant nextMonday = now.atZone(ZoneId.of("UTC"))
+            Instant nextMonday = now.atZone(ZoneId.of("Etc/GMT+7"))
                     .with(TemporalAdjusters.next(DayOfWeek.MONDAY))
                     .toInstant();
 

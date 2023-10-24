@@ -1,31 +1,35 @@
 package com.dpdc.realestate.apis;
 
 
+import com.cloudinary.Cloudinary;
 import com.dpdc.realestate.dto.ModelResponse;
-import com.dpdc.realestate.exception.DeleteDataException;
-import com.dpdc.realestate.exception.ForbiddenException;
-import com.dpdc.realestate.exception.NotFoundException;
-import com.dpdc.realestate.exception.SaveDataException;
-import com.dpdc.realestate.models.entity.Location;
+import com.dpdc.realestate.dto.request.AddProperty;
+import com.dpdc.realestate.exception.*;
+import com.dpdc.realestate.models.entity.Aminitie;
+import com.dpdc.realestate.models.entity.Media;
 import com.dpdc.realestate.models.entity.Property;
+import com.dpdc.realestate.models.entity.User;
+import com.dpdc.realestate.service.AminitieService;
+import com.dpdc.realestate.service.HelperService;
+import com.dpdc.realestate.service.MediaService;
 import com.dpdc.realestate.service.PropertyService;
 
+import com.dpdc.realestate.utils.Utils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +38,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/properties/")
+@CrossOrigin
 public class PropertyAPI {
 
     @Autowired
@@ -44,6 +49,18 @@ public class PropertyAPI {
 
     @Autowired
     private ModelMapper mapper;
+
+    @Autowired
+    private AminitieService aminitieService;
+
+    @Autowired
+    private Utils utils;
+
+    @Autowired
+    private HelperService helperService;
+
+    @Autowired
+    private MediaService mediaService;
 
 
     @GetMapping
@@ -57,7 +74,8 @@ public class PropertyAPI {
         String district = params.get("district");
         int page = params.containsKey("page") ? Integer.parseInt(params.get("page")) - 1: 0;
         PageRequest pageable = PageRequest.of(page, Integer.parseInt(env.getProperty("app.page.size")));
-        Page<Property> properties = propertyService.getProperties(propertyName, categoryId, priceFrom, priceTo, city,
+        Page<Property> properties = propertyService.getProperties(propertyName,
+                categoryId, priceFrom, priceTo, city,
                 street, district, pageable);
         return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                 properties), HttpStatus.OK);
@@ -66,24 +84,82 @@ public class PropertyAPI {
     @GetMapping("/my-property/{customerId}/")
     public ResponseEntity<ModelResponse> getMyProperty(@PathVariable Integer customerId,
                                                        @RequestParam(defaultValue = "1") String page){
-        PageRequest pageable = PageRequest.of(Integer.parseInt(page) - 1,
-                Integer.parseInt(env.getProperty("app.page.size")));
-        Page<Property> properties = propertyService.findMyProperties(customerId, pageable);
+//        PageRequest pageable = PageRequest.of(Integer.parseInt(page) - 1,
+//                Integer.parseInt(env.getProperty("app.page.size")));
+        Set<Property> properties = propertyService.findMyProperties(customerId);
         return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                 properties), HttpStatus.OK);
     }
 
-    @PostMapping
-    public ResponseEntity<ModelResponse> registerProperty(@RequestBody @Valid Property property
-            , BindingResult result) throws BindException {
-        if (result.hasErrors()) {
-            throw new BindException(result);
-        }
+
+    @GetMapping("/my-property/{staffId}/staff/")
+    public ResponseEntity<ModelResponse> getMyPropertyStaff(@PathVariable Integer staffId,
+                                                       @RequestParam(defaultValue = "1") String page){
+//        PageRequest pageable = PageRequest.of(Integer.parseInt(page) - 1,
+//                Integer.parseInt(env.getProperty("app.page.size")));
+        Set<Property> properties = propertyService.findMyPropertiesStaff(staffId);
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                properties), HttpStatus.OK);
+    }
+
+
+    @GetMapping("/{propertyId}/")
+    public ResponseEntity<ModelResponse> getPropertyById(@PathVariable Integer propertyId){
+        Property property = propertyService.getPropertyByIdAndDeleteFalse(propertyId);
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                property), HttpStatus.OK);
+    }
+    @GetMapping("/delete-property/")
+    public ResponseEntity<ModelResponse> getDeletedProperty(){
+        List<Property> properties = propertyService.getDeletedProperty();
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                properties), HttpStatus.OK);
+    }
+    @GetMapping("/get-all/")
+    public ResponseEntity<ModelResponse> getAllProperty(){
+        List<Property> properties = propertyService.getByIsActiveTrue();
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                properties), HttpStatus.OK);
+    }
+    @GetMapping("/not-active/")
+    public ResponseEntity<ModelResponse> getPropertyNotActive(){
+        Set<Property> properties = propertyService.findByIsActiveFalse();
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                properties), HttpStatus.OK);
+    }
+
+    @GetMapping("/unmanage/")
+    public ResponseEntity<ModelResponse> getUnmanagedProperties(){
+        List<Property> properties = propertyService.getUnmanagedProperties();
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                properties), HttpStatus.OK);
+    }
+
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<ModelResponse> registerProperty(@ModelAttribute AddProperty property)
+           {
         try {
-            Property saveProperty = propertyService.addProperty(property);
+            Property mappedPropery = mapper.map(property, Property.class);
+            mappedPropery.setDocuments(null);
+            mappedPropery.setMedias(null);
+            mappedPropery.setAminities(null);
+            Property saveProperty = propertyService.addProperty(mappedPropery);
+            Set<Aminitie> aminities = new HashSet<>();
+            // add aminitie
+            for (String name: property.getAminities()){
+                Aminitie aminitie = new Aminitie();
+                aminitie.setProperty(saveProperty);
+                aminitie.setName(name);
+                aminities.add(aminitie);
+            }
+            aminitieService.saveAll(aminities);
             return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                     saveProperty), HttpStatus.OK);
-        } catch (Exception exception) {
+        }
+        catch (AccountActiveException e){
+            throw e;
+        }
+        catch (Exception exception) {
             throw new SaveDataException(env.getProperty("db.notify.save_fail"));
         }
     }
@@ -106,6 +182,24 @@ public class PropertyAPI {
         catch (Exception exception) {
             throw new SaveDataException(env.getProperty("db.notify.save_fail"));
         }
+    }
+
+
+    @PostMapping("/assign/{propertyId}/{staffId}/")
+    public ResponseEntity<ModelResponse> assignPropertyv2(@PathVariable Integer propertyId, @PathVariable Integer staffId){
+        propertyService.assignProperty(propertyId, staffId);
+        // hard code
+        helperService.sendMessage("+84334436231", "Checkout new property");
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                null), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/assign/{propertyId}/{staffId}/")
+    public ResponseEntity<ModelResponse> deleteAssign(@PathVariable Integer propertyId, @PathVariable Integer staffId){
+        propertyService.deleteAssign(propertyId, staffId);
+        helperService.sendMessage("+84334436231", "cancel property");
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                null), HttpStatus.OK);
     }
 
     @DeleteMapping("/{propertyId}/")
@@ -141,20 +235,15 @@ public class PropertyAPI {
     }
 
     @PutMapping("/{propertyId}/")
-    public ResponseEntity<ModelResponse> updateProperty(@RequestBody @Valid Property property,
+    public ResponseEntity<ModelResponse> updateProperty(@RequestBody AddProperty property,
                                                         @PathVariable Integer propertyId
             , BindingResult result) throws BindException {
         if (result.hasErrors()) {
             throw new BindException(result);
         }
+//        Property myProperty = mapper.map(property ,Property.class);
         Property existProperty = propertyService.findById(propertyId);
-        Location existingLocation = existProperty.getLocation();
-        Location updatedLocation = property.getLocation();
-        existingLocation.setCity(updatedLocation.getCity());
-        existingLocation.setDistrict(updatedLocation.getDistrict());
-        existingLocation.setStreet(updatedLocation.getStreet());
         mapper.map(property, existProperty);
-        existProperty.setLocation(existingLocation);
         try {
             Property saveProperty = propertyService.updateProperty(existProperty);
             return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
@@ -181,9 +270,9 @@ public class PropertyAPI {
     }
 
 
-    @PatchMapping("/active/{propertyId}/")
-    public ResponseEntity<ModelResponse> activeProperty(@PathVariable Integer propertyId
-            , @RequestBody Map<String,Boolean> mapIsActive ) throws Exception {
+    @PostMapping("/active/{propertyId}/")
+    public ResponseEntity<ModelResponse> activeProperty( @RequestBody Map<String,Boolean> mapIsActive,@PathVariable Integer propertyId
+             ) throws Exception {
         Boolean isActive = mapIsActive.getOrDefault("isActive", false);
         try{
             Property property = propertyService.updatePropertyActiveStatus(propertyId, isActive);
@@ -198,4 +287,34 @@ public class PropertyAPI {
         }
     }
 
+    @PostMapping("/upload-media/{propertyId}/")
+    public ResponseEntity<ModelResponse> updateMedia(@ModelAttribute("media") MultipartFile media
+    , @PathVariable Integer propertyId) throws IOException {
+        Property p = new Property(propertyId);
+        helperService.uploadImages(media,p);
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                null), HttpStatus.OK);
+    }
+
+    @PostMapping("/upload-document/{propertyId}/")
+    public ResponseEntity<ModelResponse> updateDocument(@ModelAttribute("media") MultipartFile media , @PathVariable Integer propertyId) throws IOException {
+        Property p = new Property(propertyId);
+        helperService.uploadDocument(media,p);
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                null), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete-media/{mediaId}/")
+    public ResponseEntity<ModelResponse> deleteMedia( @PathVariable Integer mediaId)  {
+        helperService.deleteMedia(mediaId);
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                null), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete-document/{documentId}/")
+    public ResponseEntity<ModelResponse> deleteDocument( @PathVariable Integer documentId)  {
+        helperService.deleteDocument(documentId);
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                null), HttpStatus.OK);
+    }
 }

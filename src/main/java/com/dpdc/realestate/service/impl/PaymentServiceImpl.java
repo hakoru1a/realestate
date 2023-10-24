@@ -11,6 +11,7 @@ import com.dpdc.realestate.repository.AppointmentRepository;
 import com.dpdc.realestate.repository.CustomerRepository;
 import com.dpdc.realestate.repository.PaymentRepository;
 import com.dpdc.realestate.repository.PropertyRepository;
+import com.dpdc.realestate.service.AppointmentService;
 import com.dpdc.realestate.service.CustomerService;
 import com.dpdc.realestate.service.PaymentService;
 import com.dpdc.realestate.service.RegisterPackageService;
@@ -48,6 +49,8 @@ public class PaymentServiceImpl implements PaymentService {
     private AppointmentRepository appointmentRepository;
     @Autowired
     private PropertyRepository propertyRepository;
+    @Autowired
+    private AppointmentService appointmentService;
 
 
     @Override
@@ -66,6 +69,8 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setCustomer(customer);
             Payment pay =  paymentRepository.save(payment);
             customerPackageRegistration.setPayment(payment);
+            customer.setTimes(customer.getTimes() + billDTO.getPack().getTimes());
+            customerRepository.save(customer);
             return pay;
         }
         throw new BodyBadRequestException(env.getProperty("api.notify.bad_request"));
@@ -73,11 +78,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Payment createPaymentFromBookAppointment(Appointment appointment) {
-        Appointment conflictAppointment = checkConflictAppointment(appointment);
-        if (conflictAppointment != null){
-            throw new RejectException("Trùng lịch");
-        }
-        EntityCheckHandler.checkEntityExistById(propertyRepository, appointment.getProperty().getId());
+        isValidAppointment(appointment);
         Appointment myAppointment = appointmentRepository.save(appointment);
         Payment payment = new Payment();
         payment.setPaymentDate(Instant.now());
@@ -92,6 +93,17 @@ public class PaymentServiceImpl implements PaymentService {
         return pay;
     }
 
+
+    @Override
+    public void isValidAppointment(Appointment appointment) {
+        Appointment conflictAppointment = checkConflictAppointment(appointment);
+        if (conflictAppointment != null){
+            throw new RejectException("Trùng lịch");
+        }
+        EntityCheckHandler.checkEntityExistById(propertyRepository, appointment.getProperty().getId());
+    }
+
+
     @Override
     public Set<PaymentData> getPayments(Integer customerId) {
         isMyPaymentOrAdmin(customerId);
@@ -99,13 +111,13 @@ public class PaymentServiceImpl implements PaymentService {
     }
     private Appointment checkConflictAppointment(Appointment appointment) {
         Instant time = appointment.getAppointmentDate();
-        Set<Appointment> existAppointments = appointmentRepository.findByCustomerId(appointment.getCustomer().getId());
+        Set<Appointment> existAppointments = appointmentRepository
+                .findByCustomerId(appointment.getCustomer().getId());
         Integer currentShift = Utils.calculateAppointmentShift(time);
         if (currentShift == -1)
             throw new RejectException("Sai lịch");
         // Biến để kiểm tra xem có trùng ngày không
         boolean isDateConflict = false;
-
         // Kiểm tra xem cuộc hẹn có trùng ngày với các cuộc hẹn khác hay không
         for (Appointment existingAppointment : existAppointments) {
             if (Utils.isSameDay(time, existingAppointment.getAppointmentDate())) {
@@ -116,7 +128,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         // Nếu trùng ngày, tính toán và so sánh ca
         if (isDateConflict) {
-
             for (Appointment existingAppointment : existAppointments) {
                 Integer existingShift = Utils.calculateAppointmentShift(existingAppointment.getAppointmentDate());
                 if (currentShift.equals(existingShift)) {

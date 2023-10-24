@@ -61,6 +61,11 @@ public class RestResponseEntityExceptionHandler {
     public ResponseEntity<ModelResponse> handleRejectException(RejectException ex) {
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(value = {AccountActiveException.class})
+    public ResponseEntity<ModelResponse> handleAccountActiveException(AccountActiveException ex) {
+            // use in register account
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
+    }
 
 
     @ExceptionHandler(value = {HttpMessageNotReadableException.class})

@@ -1,11 +1,15 @@
 package com.dpdc.realestate.service.impl;
 
+import com.dpdc.realestate.exception.AccountActiveException;
+import com.dpdc.realestate.exception.NotFoundException;
+import com.dpdc.realestate.exception.RejectException;
 import com.dpdc.realestate.handler.EntityCheckHandler;
 import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.models.entity.User;
 import com.dpdc.realestate.repository.CustomerRepository;
 import com.dpdc.realestate.repository.UserRepository;
 import com.dpdc.realestate.service.UserService;
+import com.twilio.twiml.voice.Reject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,6 +24,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,25 +42,52 @@ public class UserServiceImpl implements UserService {
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(s).orElse(null);
         if (user != null) {
+                if (!user.getIsActive()){
+                throw new AccountActiveException("Account has not been activated yet, check mail now !");
+            }
             Set<GrantedAuthority> authorities = new HashSet<>();
             authorities.add(new SimpleGrantedAuthority(user.getRole().getRoleName()));
             return new org.springframework.security.core.userdetails.User(user.getUsername(),
                     user.getPassword(), authorities);
         }
-        Customer customer = customerRepository.findByUsername(s).orElse(null);
+        return findCustomerByUsername(s, false);
+    }
+    @Override
+    public UserDetails findCustomerByUsername(String username, boolean isRegister) {
+        Customer customer = customerRepository.findByUsername(username).orElse(null);
         if (customer != null) {
+            if (!isRegister && !customer.getIsActive()){
+                throw new  AccountActiveException("Account has not been activated yet, check mail now !");
+            }
             Set<GrantedAuthority> authorities = new HashSet<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
             return new org.springframework.security.core.userdetails.User(customer.getUsername(),
                     customer.getPassword(), authorities);
         }
         throw new UsernameNotFoundException("User does not exist!");
+
+    }
+
+    @Override
+    public User getCurrentCredential() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return findByUsername(authentication.getName()).orElse(null);
     }
 
     @Override
     public User register(User newUser) {
             newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
             return userRepository.save(newUser);
+    }
+
+    @Override
+    public Optional<User> findByUsername(String username) {
+      return Optional.ofNullable(userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException("User not found")));
+    }
+
+    @Override
+    public List<User> getAllUser() {
+        return userRepository.findAll();
     }
 
 
@@ -120,6 +152,63 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean isExistByUsername(Integer userId, String username, boolean isExcept) {
+        if (isExcept) {
+            // Trường hợp cập nhật: Bạn có thể xử lý kiểm tra trùng lặp ở đây
+            // Trả về true nếu username đã tồn tại cho người dùng khác, ngược lại trả về false
+            User currentUser = findById(userId);
+            Optional<User> existingUser = userRepository.findByUsername(username);
+            if (currentUser == null){
+                return existingUser.isPresent();
+            }
+            return existingUser.isPresent()
+                    && !existingUser.get().getId().equals(currentUser.getId()); // Trùng lặp với người dùng khác
+        } else {
+            // Trường hợp tạo mới: Bạn có thể xử lý kiểm tra trùng lặp ở đây
+            // Trả về true nếu username đã tồn tại, ngược lại trả về false
+            return userRepository.findByUsername(username).isPresent();
+        }
+    }
+
+    @Override
+    public boolean isExistByPhone(Integer userId, String phone, boolean isExcept) {
+        if (isExcept) {
+            // Trường hợp cập nhật: Bạn có thể xử lý kiểm tra trùng lặp ở đây
+            // Trả về true nếu số điện thoại đã tồn tại cho người dùng khác, ngược lại trả về false
+            User currentUser = findById(userId);
+            Optional<User> existingUser = userRepository.findByPhone(phone);
+            if (currentUser == null){
+                return existingUser.isPresent();
+            }
+            return existingUser.isPresent()
+                    && !existingUser.get().getId().equals(currentUser.getId()); // Trùng lặp với người dùng khác
+        } else {
+            // Trường hợp tạo mới: Bạn có thể xử lý kiểm tra trùng lặp ở đây
+            // Trả về true nếu số điện thoại đã tồn tại, ngược lại trả về false
+            return userRepository.findByPhone(phone).isPresent();
+        }
+    }
+
+    @Override
+    public boolean isExitsByEmail(Integer userId, String email, boolean isExcept) {
+        if (isExcept) {
+            // Trường hợp cập nhật: Bạn có thể xử lý kiểm tra trùng lặp ở đây
+            // Trả về true nếu email đã tồn tại cho người dùng khác, ngược lại trả về false
+            User currentUser = findById(userId);
+            Optional<User> existingUser = userRepository.findByEmail(email);
+            if (currentUser == null){
+                return existingUser.isPresent();
+            }
+            return existingUser.isPresent()
+                    && !existingUser.get().getId().equals(currentUser.getId()); // Trùng lặp với người dùng khác
+        } else {
+            // Trường hợp tạo mới: Bạn có thể xử lý kiểm tra trùng lặp ở đây
+            // Trả về true nếu email đã tồn tại, ngược lại trả về false
+            return userRepository.findByEmail(email).isPresent();
+        }
+    }
+
+    @Override
     public User save(User user) {
         return userRepository.save(user);
     }
@@ -147,5 +236,7 @@ public class UserServiceImpl implements UserService {
         }
         return null;
     }
+
+
 
 }

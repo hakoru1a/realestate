@@ -30,6 +30,9 @@ public class Customer {
     private String username;
 
 
+    @Column(name = "about")
+    private String about;
+
     @JsonIgnore
     @Size(max = 255)
     @NotNull

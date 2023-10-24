@@ -1,6 +1,6 @@
 package com.dpdc.realestate.models.entity;
 
-import com.dpdc.realestate.validator.anotation.ValidLocation;
+import com.dpdc.realestate.models.enumerate.Purpose;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,8 +18,6 @@ import java.util.Set;
 @Setter
 @Entity
 @Table(name = "property", schema = "realestate", indexes = {
-        @Index(name = "location_id", columnList = "location_id", unique = true),
-        @Index(name = "category_id", columnList = "category_id")
 })
 public class Property implements Serializable {
     @Id
@@ -32,28 +30,72 @@ public class Property implements Serializable {
     @Column(name = "property_name", nullable = false)
     private String propertyName;
 
-    @Column(name = "is_active", insertable = false , updatable = false)
-    private Boolean isActive;
-
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "location_id")
-    @ValidLocation
-    private Location location;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "category_id")
-    private Category category;
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     @Column(name = "price", precision = 10, scale = 2)
     @NotNull(message = "Giá là bắt buộc")
     @NumberFormat(style = NumberFormat.Style.CURRENCY)
     private BigDecimal price;
 
+
+    @Column(name = "bed")
+    @NotNull(message = "Số phòng ngủ là bắt buộc")
+    private Integer bed;
+
+    @Column(name = "rent_period")
+    private Integer rentPeriod;
+
+    @Column(name = "bath")
+    @NotNull(message = "bath là bắt buộc")
+    private Integer bath;
+
+
+    @Column(name = "garage")
+    @NotNull(message = "garage là bắt buộc")
+    private Integer garage;
+
+    @Column(name = "kitchen")
+    @NotNull(message = "kitchen là bắt buộc")
+    private Integer kitchen;
+
+    @Column(name = "area")
+    @NotNull(message = "area là bắt buộc")
+    private BigDecimal area;
+
+    @Column(name = "latitude")
+    @NotNull(message = "latitude là bắt buộc")
+    private String latitude;
+
+    @Column(name = "address")
+    @NotNull(message = "address là bắt buộc")
+    private String address;
+
+    @Column(name = "longitude")
+    @NotNull(message = "longitude là bắt buộc")
+    private String longitude;
+
+    @Column(name = "slug")
+    private String slug;
+
+    @Column(name = "purpose")
+    @Enumerated(EnumType.STRING)
+    private Purpose purpose;
+
+
     @Lob
-    @NotNull(message = "Mô tả là bắt buộc")
     @Column(name = "description")
     private String description;
 
+
+    @Lob
+    @NotNull(message = "type là bắt buộc")
+    @Column(name = "property_type")
+    private String propertyType;
+
+    @Column(name = "is_active", insertable = false , updatable = false)
+    private Boolean isActive;
 
     @JsonIgnore
     @Column(name = "is_deleted", insertable = false, updatable = false)
@@ -76,8 +118,17 @@ public class Property implements Serializable {
 
     }
 
+    @OneToMany(mappedBy = "property", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private Set<Aminitie> aminities;
 
+    @OneToMany(mappedBy = "property", fetch = FetchType.EAGER , cascade = CascadeType.ALL)
+    private Set<Comment> comments;
 
+    @OneToMany(mappedBy = "property", fetch = FetchType.EAGER , cascade = CascadeType.ALL)
+    private Set<Media> medias;
+
+    @OneToMany(mappedBy = "property", fetch = FetchType.EAGER , cascade = CascadeType.ALL)
+    private Set<Document> documents;
 
     @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
@@ -98,9 +149,7 @@ public class Property implements Serializable {
     )
     private Set<Property> wishlist;
 
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
-    private Customer customer;
+
 
 
 }

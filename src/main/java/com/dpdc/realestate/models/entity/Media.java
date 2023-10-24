@@ -1,5 +1,6 @@
 package com.dpdc.realestate.models.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,6 +30,11 @@ public class Media {
     @Column(name = "media_type", length = 50)
     private String mediaType;
 
+
+    @Column(name = "url")
+    private String url;
+
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id")
     private Property property;

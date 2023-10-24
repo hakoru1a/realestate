@@ -9,6 +9,7 @@ import java.util.Set;
 public interface WishlistService {
     Page<Property> getWishlist(Integer id, Pageable pageable);
 
+    Set<Property> getWishlist(Integer id);
     Property addOrRemoveWishlist(Integer propertyId, Integer customerId);
 
 

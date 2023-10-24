@@ -53,8 +53,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity.cors().disable();
         httpSecurity.csrf().disable()
                 .authorizeRequests()
+                .antMatchers(HttpMethod.GET, "/authenticate/").hasRole("CUSTOMER")
                 // Property
                 .antMatchers(HttpMethod.POST, "/api/properties/").hasRole("CUSTOMER")
                 .antMatchers(HttpMethod.GET, "/api/properties/my-property/{customerId}/").hasRole("CUSTOMER") // id là id customer
@@ -102,7 +104,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/api/appointments/{appointmentId}/{staffId}/staff/").hasRole("STAFF")
 
                 .anyRequest().permitAll() // All other endpoints are open to all users
-                .and().exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
+                .and().exceptionHandling()
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
     }
@@ -110,16 +114,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 
 
-    @Bean
-    public CorsFilter corsFilter() {
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOrigin("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
-    }
+
 }

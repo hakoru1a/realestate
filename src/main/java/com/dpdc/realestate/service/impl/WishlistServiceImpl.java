@@ -31,6 +31,12 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
+    public Set<Property> getWishlist(Integer id) {
+         EntityCheckHandler.checkEntityExistById(customerRepository, id);
+        return propertyRepository.findAllPropertiesInWishlistByCustomerId(id);
+    }
+
+    @Override
     public Property addOrRemoveWishlist(Integer propertyId, Integer customerId) {
         Customer customer = EntityCheckHandler.checkEntityExistById(customerRepository, customerId);
         Property property = EntityCheckHandler.checkEntityExistById(propertyRepository, propertyId);

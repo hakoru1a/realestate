@@ -3,7 +3,11 @@ package com.dpdc.realestate.apis;
 import com.dpdc.realestate.dto.JwtResponse;
 import com.dpdc.realestate.dto.ModelResponse;
 import com.dpdc.realestate.dto.request.Credential;
+import com.dpdc.realestate.exception.RejectException;
 import com.dpdc.realestate.jwt.JwtTokenUtils;
+import com.dpdc.realestate.models.entity.Customer;
+import com.dpdc.realestate.models.entity.User;
+import com.dpdc.realestate.service.CustomerService;
 import com.dpdc.realestate.service.UserService;
 import com.dpdc.realestate.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,18 +38,24 @@ public class AuthenticationAPI {
     private JwtTokenUtils jwtTokenUtils;
     @Autowired
     private UserService userService;
+    @Autowired
+    private CustomerService customerService;
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<ModelResponse> createAuthenticationToken(
             @RequestBody @Valid Credential authenticationRequest
-    ) throws Exception {
+    )  {
         try {
             authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
             final UserDetails userDetails = userService
                     .loadUserByUsername(authenticationRequest.getUsername());
             return generateToken(userDetails, false);
-        }catch (Exception exception){
+        }
+        catch (RejectException e){
+            throw e;
+        }
+        catch (Exception exception){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    new ModelResponse("Get auth token failed", null)
+                    new ModelResponse(exception.getMessage(), null)
             );
         }
     }
@@ -80,14 +90,14 @@ public class AuthenticationAPI {
         }
     }
 
-
     private void authenticate(String username, String password) throws Exception {
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        } catch (DisabledException e) {
-            throw new Exception("USER_DISABLED", e);
+        }
+        catch (DisabledException e) {
+            throw new DisabledException("USER_DISABLED", e);
         } catch (BadCredentialsException e) {
-            throw new Exception("INVALID_CREDENTIALS", e);
+            throw new BadCredentialsException("Wrong username or password", e);
         }
     }
     private ResponseEntity<ModelResponse> generateToken(UserDetails userDetails,
@@ -102,4 +112,21 @@ public class AuthenticationAPI {
         );
     }
 
+    @GetMapping("/current-customer/")
+    public ResponseEntity<ModelResponse> getCurrentCustomer(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Customer customer = customerService.findByUsername(authentication.getName()).orElse(null);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ModelResponse("Get user successfully", customer)
+        );
+    }
+
+    @GetMapping("/current-staff/")
+    public ResponseEntity<ModelResponse> getCurrentStaff(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.findByUsername(authentication.getName()).get();
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ModelResponse("Get user successfully", user)
+        );
+    }
 }

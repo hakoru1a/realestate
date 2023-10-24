@@ -14,6 +14,7 @@ public interface PaymentService {
 
     Payment createPaymentFromBookAppointment(Appointment appointment);
 
-
     Set<PaymentData> getPayments(Integer customerId );
+
+    void isValidAppointment(Appointment appointment);
 }

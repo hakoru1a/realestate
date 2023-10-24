@@ -41,6 +41,4 @@ public class CustomerPackageRegistration {
     private Instant registrationDate;
 
 
-
-
 }

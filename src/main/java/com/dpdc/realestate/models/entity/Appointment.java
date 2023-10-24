@@ -58,4 +58,13 @@ public class Appointment {
     @Column(name = "modified_at", insertable = false, updatable = false)
     private Instant modifiedAt;
 
+
+    public Appointment(Integer propertyId, Integer customerId, Instant appointmentDate ){
+        this.property = new Property(propertyId);
+        this.customer = new Customer(customerId);
+        this.appointmentDate = appointmentDate;
+    }
+    public Appointment(){
+
+    }
 }

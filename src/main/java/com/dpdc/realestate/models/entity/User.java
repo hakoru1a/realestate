@@ -39,7 +39,7 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "role_id")
     private Role role;
 
@@ -97,7 +97,9 @@ public class User {
         this.id = id;
     }
 
-
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<Appointment>  appointments;
 //    @JsonIgnore
 //    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
 //    private Set<Manageproperty> manageProperties;

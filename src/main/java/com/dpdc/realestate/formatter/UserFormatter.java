@@ -1,6 +1,5 @@
 package com.dpdc.realestate.formatter;
 
-import com.dpdc.realestate.models.entity.Category;
 import com.dpdc.realestate.models.entity.User;
 import org.springframework.format.Formatter;
 

@@ -7,6 +7,7 @@ import com.dpdc.realestate.dto.request.Mail;
 import com.dpdc.realestate.dto.request.ProfileCustomer;
 import com.dpdc.realestate.exception.DataAlreadyExistException;
 import com.dpdc.realestate.exception.PasswordException;
+import com.dpdc.realestate.exception.RejectException;
 import com.dpdc.realestate.jwt.JwtTokenUtils;
 import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.service.CustomerService;
@@ -24,6 +25,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.validation.Path;
 import javax.validation.Valid;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,6 +36,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/customers/")
+@CrossOrigin
 public class CustomerAPI {
     @Autowired
     private ModelMapper mapper;
@@ -62,7 +67,7 @@ public class CustomerAPI {
         customerService.activeByUsername(username);
         return new
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
-                username), HttpStatus.OK);
+                null), HttpStatus.OK);
     }
     @GetMapping("/active/{username}/")
     public ResponseEntity<ModelResponse> activeCustomerForAdmin(@PathVariable String username){
@@ -71,19 +76,42 @@ public class CustomerAPI {
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                 username), HttpStatus.OK);
     }
+    @DeleteMapping("/{customerId}/")
+    public ResponseEntity<ModelResponse> deleteCustomerId(@PathVariable Integer customerId){
+        customerService.deleteById(customerId);
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                null), HttpStatus.OK);
+    }
+
+    @GetMapping("/get-all/")
+    public ResponseEntity<ModelResponse> getAllCustomer(){
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                customerService.getAllCustomer()), HttpStatus.OK);
+    }
+    @GetMapping("/details/{customerId}/")
+    public ResponseEntity<ModelResponse> getCustomerById(@PathVariable Integer customerId){
+        Customer customer = customerService.findById(customerId);
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                customer), HttpStatus.OK);
+    }
     @PostMapping
     public ResponseEntity<ModelResponse> registerUser(@RequestBody @Valid CredentialRegister credential
             , BindingResult result) throws Exception{
         if (result.hasErrors()) {
             throw new BindException(result);
         }
-        validationService.validateCredential(credential, false);
-        try {
+            validationService.validateCredential(credential, false);
             Customer newCustomer = mapper.map(credential,Customer.class);
+            newCustomer.setPassword(env.getProperty("app.default_password"));
             Customer savedCustomer = customerService.register(newCustomer);
-            UserDetails userDetails = userService.loadUserByUsername(savedCustomer.getUsername());
+            savedCustomer.setTimes(1);
+            savedCustomer.setIsActive(false);
+            UserDetails userDetails = userService.findCustomerByUsername(savedCustomer.getUsername(), true);
             // Send mail to active
-            String token = jwtTokenUtils.generateToken(userDetails, false);
+            String token = jwtTokenUtils.generateToken(userDetails, true);
             Mail mail = new Mail("Active your account", "Kich hoạt tại khoản",
                     "2051052012chuong@ou.edu.vn");
             Map<String, String> map = new HashMap<>();
@@ -92,10 +120,7 @@ public class CustomerAPI {
             return new
                     ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                     savedCustomer), HttpStatus.OK);
-        }
-        catch (Exception ex){
-            throw new Exception();
-        }
+
     }
     @PutMapping("/update-profile/")
     public ResponseEntity<ModelResponse> updateProfile( @RequestBody  @Valid ProfileCustomer profile
@@ -105,12 +130,32 @@ public class CustomerAPI {
         }
         validationService.validateCredential(profile, true);
         Customer existingCustomer = customerService.findById(profile.getId());
+        String password = existingCustomer.getPassword();
         mapper.map(profile, existingCustomer);
-        Customer savedCustomer = customerService.register(existingCustomer);
+        existingCustomer.setPassword(password);
+        Customer savedCustomer = customerService.update(existingCustomer);
         return new
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedCustomer), HttpStatus.OK);
     }
 
+    @PutMapping("/update-profile/{customerId}/admin/")
+    public ResponseEntity<ModelResponse> updateProfileAdmin( @RequestBody  @Valid CredentialRegister profile
+            ,@PathVariable Integer customerId
+            ,BindingResult result) throws Exception{
+        if (result.hasErrors()) {
+            throw new BindException(result);
+        }
+        validationService.validateCredential(customerId, profile, true);
+        Customer existingCustomer = customerService.findById(customerId);
+        existingCustomer.setUsername(profile.getUsername());
+        existingCustomer.setEmail(profile.getEmail());
+        existingCustomer.setPhone(profile.getPhone());
+        existingCustomer.setFullname(profile.getFullname());
+        existingCustomer.setPassword(env.getProperty("app.default_password"));
+        Customer savedCustomer = customerService.register(existingCustomer);
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedCustomer), HttpStatus.OK);
+    }
 
     @PatchMapping("/change-password/{id}/")
     public ResponseEntity<ModelResponse> changePassword(
@@ -137,6 +182,20 @@ public class CustomerAPI {
         return new
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
                 savedCustomer), HttpStatus.OK);
+    }
+
+    @PatchMapping("/avatar/{id}/")
+    public ResponseEntity<ModelResponse> updateAvatar(
+            @ModelAttribute("image") MultipartFile image,
+            @PathVariable Integer id
+    ){
+        Customer exitsCustomer = customerService.findById(id);
+        String url = helperService.uploadImage(image);
+        exitsCustomer.setAvatar(url);
+        customerService.save(exitsCustomer);
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                exitsCustomer), HttpStatus.OK);
     }
 
 

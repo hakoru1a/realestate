@@ -2,11 +2,15 @@ package com.dpdc.realestate.service.impl;
 
 import com.dpdc.realestate.exception.ForbiddenException;
 import com.dpdc.realestate.exception.NotFoundException;
+import com.dpdc.realestate.exception.RejectException;
 import com.dpdc.realestate.handler.EntityCheckHandler;
+import com.dpdc.realestate.models.entity.Comment;
 import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.models.entity.Property;
 import com.dpdc.realestate.models.entity.User;
 import com.dpdc.realestate.models.enumerate.Role;
+import com.dpdc.realestate.repository.CustomerRepository;
+import com.dpdc.realestate.repository.ManagePropertyRepository;
 import com.dpdc.realestate.repository.PropertyRepository;
 import com.dpdc.realestate.repository.UserRepository;
 import com.dpdc.realestate.service.CustomerService;
@@ -39,16 +43,29 @@ public class PropertyServiceImpl implements PropertyService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private CustomerRepository customerRepository;
+    @Autowired
+    private ManagePropertyRepository managePropertyRepository;
 
 
     @Override
     public Property addProperty(Property property) {
+        Customer customer = EntityCheckHandler.checkEntityExistById(customerRepository, property.getCustomer().getId());
+        if (customer.getTimes() == null || customer.getTimes() == 0)
+            throw new RejectException("Not enough turns");
+        customerService.setTurn(property.getCustomer().getId(),  1, true);
         return  propertyRepository.save(property);
     }
 
     @Override
     public boolean deleteProperty(Property property) {
         return false;
+    }
+
+    @Override
+    public List<Property> getDeletedProperty() {
+        return propertyRepository.findByIsDeletedTrue();
     }
 
     @Override
@@ -63,6 +80,12 @@ public class PropertyServiceImpl implements PropertyService {
     }
 
     @Override
+    public Property getPropertyByIdAndDeleteFalse(Integer id) {
+        return propertyRepository.findByIsDeletedFalseAndId(id)
+                .orElseThrow(() -> new NotFoundException("NOT FOUND"));
+    }
+
+    @Override
     public void softDeletePropertyById(Integer id, Boolean isDeleted)  {
         isOwnerProperty(id);
         propertyRepository.softDeletePropertyById(id, isDeleted);
@@ -73,20 +96,43 @@ public class PropertyServiceImpl implements PropertyService {
         EntityCheckHandler.checkEntityExistById(propertyRepository, id);
         propertyRepository.deleteById(id);
     }
+
+    @Override
+    public Set<Property> findByIsActiveFalse() {
+        return propertyRepository.findByIsActiveFalse();
+    }
+
+    @Override
+    public List<Property> getAll() {
+        return propertyRepository.findAll();
+    }
+
+    @Override
+    public List<Property> getByIsActiveTrue() {
+        return propertyRepository.findByIsActiveTrue();
+    }
+
+    @Override
+    public List<Property> getUnmanagedProperties() {
+        return propertyRepository.findUnmanagedProperties();
+    }
+
     private void isOwnerProperty(Integer id){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Property property = EntityCheckHandler.checkEntityExistById(propertyRepository,id);
         if (authentication.getAuthorities().stream().anyMatch(auth ->
                 "ROLE_CUSTOMER".equals(auth.getAuthority()))){
             Customer customer = customerService.getCurrentCredential();
-            if (propertyRepository.findByCustomerAndId(customer, property.getId()).isEmpty()) {
+            Optional<Property> c = propertyRepository.findByCustomerAndId(customer, property.getId());
+            if (c.isEmpty()) {
                 throw new ForbiddenException("Access denied: Property does not belong to the current customer");
             }
         }
     }
 
     @Override
-    public Page<Property> getProperties(String propertyName, Integer categoryId, BigDecimal priceFrom, BigDecimal priceTo, String city, String street, String district, Pageable pageable) {
+    public Page<Property> getProperties(String propertyName, Integer categoryId, BigDecimal
+            priceFrom, BigDecimal priceTo, String city, String street, String district, Pageable pageable) {
         Specification<Property> spec = Specification.where((root, query, criteriaBuilder) ->
                 criteriaBuilder.and(
                         criteriaBuilder.equal(root.get("isDeleted"), false),
@@ -97,7 +143,6 @@ public class PropertyServiceImpl implements PropertyService {
         if (propertyName != null && !propertyName.isEmpty()) {
             spec = spec.and(PropertySpecifications.propertyNameLike(propertyName));
         }
-
         if (categoryId != null) {
             spec = spec.and(PropertySpecifications.categoryIdEqual(categoryId));
         }
@@ -110,30 +155,35 @@ public class PropertyServiceImpl implements PropertyService {
             spec = spec.and(PropertySpecifications.priceLessThanOrEqualTo(priceTo));
         }
 
-        if (city != null && !city.isEmpty()) {
-            spec = spec.and(PropertySpecifications.cityLike(city));
-        }
 
-        if (street != null && !street.isEmpty()) {
-            spec = spec.and(PropertySpecifications.streetLike(street));
-        }
-
-        if (district != null && !district.isEmpty()) {
-            spec = spec.and(PropertySpecifications.districtLike(district));
-        }
         return propertyRepository.findAll(spec, pageable);
     }
 
     @Override
     public Property updatePropertyActiveStatus(Integer propertyId, Boolean isActive) {
-        EntityCheckHandler.checkEntityExistById(propertyRepository, propertyId);
+        Property p = EntityCheckHandler.checkEntityExistById(propertyRepository, propertyId);
         propertyRepository.updatePropertyActiveStatus(propertyId,isActive);
+        if (!isActive){
+            Customer customer = p.getCustomer();
+            customer.setTimes(customer.getTimes() - 1);
+        }
         return findById(propertyId);
     }
 
     @Override
     public Page<Property> findMyProperties(Integer customerId, Pageable pageable ){
         return propertyRepository.findAllByCustomerId(customerId, pageable);
+    }
+
+    @Override
+    public Set<Property> findMyProperties(Integer customerId) {
+        return  propertyRepository.findAllByCustomerIdAndIsDeletedIsFalse(customerId);
+    }
+
+    @Override
+    public Set<Property> findMyPropertiesStaff(Integer staffId) {
+        User user = EntityCheckHandler.checkEntityExistById( userRepository, staffId);
+        return user.getPropertyManage();
     }
 
     @Override
@@ -166,6 +216,27 @@ public class PropertyServiceImpl implements PropertyService {
         property.setStaffs(staffMembers);
         // Save the updated property
         propertyRepository.save(property);
+    }
+
+    @Override
+    public void assignProperty(Integer propertyId, Integer staffId) {
+        Integer count = managePropertyRepository.countByUserId(staffId);
+        if (count > 10) {
+            throw new RejectException("Quá 10 nhà đã được giao");
+        }
+        Property property = EntityCheckHandler.checkEntityExistById(propertyRepository, propertyId);
+        User user = EntityCheckHandler.checkEntityExistById(userRepository, staffId);
+        Set<Property> properties = user.getPropertyManage();
+        properties.add(property);
+        propertyRepository.save(property);
+
+    }
+
+    @Override
+    public void deleteAssign(Integer propertyId, Integer staffId) {
+        EntityCheckHandler.checkEntityExistById(propertyRepository, propertyId);
+        EntityCheckHandler.checkEntityExistById(userRepository, staffId);
+        managePropertyRepository.deleteByPropertyIdAndUserId(propertyId, staffId);
     }
 
 

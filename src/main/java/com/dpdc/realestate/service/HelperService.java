@@ -1,9 +1,13 @@
 package com.dpdc.realestate.service;
 
 import com.dpdc.realestate.dto.request.Mail;
+import com.dpdc.realestate.models.entity.Property;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface HelperService {
 
@@ -11,6 +15,17 @@ public interface HelperService {
     String uploadImage(MultipartFile file);
 
     boolean deleteImage(String publicId);
+
+    void deleteMedia(Integer id);
+
+    void deleteDocument(Integer id);
+
+
+    void uploadMedia(List<MultipartFile> files, Property property) throws IOException;
+
+    void uploadImages(MultipartFile file, Property property) throws IOException;
+
+    void uploadDocument(MultipartFile file, Property property) throws IOException;
 
     Map getCloudinaryUsage();
 

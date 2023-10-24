@@ -18,6 +18,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/wishlist/")
+@CrossOrigin
 public class WishlistAPI {
 
     @Autowired
@@ -28,17 +29,19 @@ public class WishlistAPI {
     @GetMapping("/{customerId}/")
     public ResponseEntity<ModelResponse> getWishlist(@PathVariable Integer customerId
             , @RequestParam(required = false, defaultValue = "1") String page){
-        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1 , Integer.parseInt(env.getProperty("app.page.size")));
-        Page<Property> wishlist =  wishlistService.getWishlist(customerId, pageable);
+//        Pageable pageable = PageRequest.of(Integer.parseInt(page) - 1 , Integer.parseInt(env.getProperty("app.page.size")));
+//        Page<Property> wishlist =  wishlistService.getWishlist(customerId, pageable);
+            Set<Property> wishlist =  wishlistService.getWishlist(customerId);
         return new
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), wishlist),
                 HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{propertyId}/{customerId}", method = {RequestMethod.POST, RequestMethod.DELETE})
+    @RequestMapping(value = "/{propertyId}/{customerId}/",
+            method = {RequestMethod.POST, RequestMethod.DELETE})
     public ResponseEntity<ModelResponse> addOrRemoveWishlist(@PathVariable Integer customerId,
                                                            @PathVariable Integer propertyId){
-        Property property = wishlistService.addOrRemoveWishlist(propertyId, customerId);
+            Property property = wishlistService.addOrRemoveWishlist(propertyId, customerId);
         return new
                 ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), property),
                 HttpStatus.OK);

@@ -10,6 +10,7 @@ public interface AppointmentService {
 
     Set<Appointment> getAppointments(Integer customerId);
 
+    Set<Appointment> getAppointmentsStaff(Integer staffId);
     void deleteAppointmentId(Integer appointmentId, Integer customerId);
 
     Appointment cancelAppointmentInteger(Integer appointmentId, Integer customerId);
@@ -18,6 +19,6 @@ public interface AppointmentService {
 
     Page<Appointment> getAppointments(Integer staffId, Pageable pageable);
 
-
+    Set<Appointment> getAppointmentsWithNullUser();
     Appointment pickupAppointment(Integer appointmentId, Integer staffId);
 }

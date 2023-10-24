@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.ui.freemarker.FreeMarkerConfigurationFactoryBean;
 import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.handler.MappedInterceptor;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 @Configuration
@@ -26,9 +27,6 @@ public class WebAppContextConfig implements WebMvcConfigurer {
     public InternalResourceViewResolver defaultViewResolver() {
         return new InternalResourceViewResolver();
     }
-
-
-
 
     @Primary
     @Bean
@@ -47,9 +45,6 @@ public class WebAppContextConfig implements WebMvcConfigurer {
                 .setFieldMatchingEnabled(true)
                 .setFieldAccessLevel(org.modelmapper.config.Configuration.AccessLevel.PRIVATE);
 
-        // Create a custom mapping to ignore 'location' when mapping Property
-        modelMapper.createTypeMap(Property.class, Property.class)
-                .addMapping(Property::getLocation, Property::setLocation);
 
         return modelMapper;
     }
@@ -60,7 +55,6 @@ public class WebAppContextConfig implements WebMvcConfigurer {
 
     @Override
     public void addFormatters(FormatterRegistry registry) {
-        registry.addFormatter(new CategoryFormatter());
         registry.addFormatter(new PropertyFormatter());
         registry.addFormatter(new CustomerFormatter());
         registry.addFormatter(new UserFormatter());
@@ -72,4 +66,11 @@ public class WebAppContextConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/static/**")
                 .addResourceLocations("classpath:/static/");
     }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**");
+    }
+
+
 }

@@ -10,7 +10,7 @@
 
 <p>Chào mừng bạn đến với trang web của chúng tôi! Để kích hoạt tài khoản của bạn, vui lòng nhấn vào nút dưới đây:</p>
 
-<a href="http://localhost:8080/api/customers/${token}/" target="_blank">
+<a href="http://localhost:5173/active-account/${token}/" target="_blank">
     <button style="background-color: #007bff; color: #fff; padding: 10px 20px; border: none; cursor: pointer; text-align: center;">Kích hoạt tài khoản</button>
 </a>
 

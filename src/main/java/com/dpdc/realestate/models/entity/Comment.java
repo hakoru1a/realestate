@@ -21,11 +21,12 @@ public class Comment {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id")
     private Property property;
@@ -35,10 +36,10 @@ public class Comment {
     @Column(name = "comment")
     private String comment;
 
-    @Column(name = "created_at", insertable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "modified_at", insertable = false)
+    @Column(name = "modified_at", insertable = false, updatable = false)
     private Instant modifiedAt;
 
 

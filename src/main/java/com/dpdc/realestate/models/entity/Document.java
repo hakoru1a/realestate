@@ -1,5 +1,6 @@
 package com.dpdc.realestate.models.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,17 +28,18 @@ public class Document {
 
     @Size(max = 255)
     @NotNull
-    @Column(name = "file_path", nullable = false)
-    private String filePath;
+    @Column(name = "url", nullable = false)
+    private String url;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id")
     private Property property;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "modified_at")
+    @Column(name = "modified_at", insertable = false, updatable = false)
     private Instant modifiedAt;
 
 }

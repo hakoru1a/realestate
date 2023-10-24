@@ -9,7 +9,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ModelResponse {
 
-
     private String message;
 
     private Object data;

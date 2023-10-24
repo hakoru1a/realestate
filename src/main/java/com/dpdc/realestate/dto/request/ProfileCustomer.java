@@ -18,11 +18,10 @@ public class ProfileCustomer  extends CredentialRegister {
 
     private Instant dateOfBirth;
 
-    private Gender gender;
+//    private Gender gender;
 
     private String address;
 
     private String occupation;
-
 
 }

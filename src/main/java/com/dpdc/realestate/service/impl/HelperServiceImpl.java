@@ -4,7 +4,16 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.dpdc.realestate.dto.request.Mail;
 import com.dpdc.realestate.exception.MessageSendingException;
+import com.dpdc.realestate.exception.RejectException;
+import com.dpdc.realestate.handler.EntityCheckHandler;
+import com.dpdc.realestate.models.entity.Document;
+import com.dpdc.realestate.models.entity.Media;
+import com.dpdc.realestate.models.entity.Property;
+import com.dpdc.realestate.repository.DocumentRepository;
+import com.dpdc.realestate.repository.MediaRepository;
 import com.dpdc.realestate.service.HelperService;
+import com.dpdc.realestate.service.YoutubeService;
+import com.dpdc.realestate.utils.Utils;
 import com.twilio.type.PhoneNumber;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -18,13 +27,18 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 import com.twilio.rest.api.v2010.account.Message;
 
 import javax.mail.MessagingException;
@@ -44,6 +58,18 @@ public class HelperServiceImpl implements HelperService {
 
     @Autowired
     private Configuration config;
+    @Autowired
+    private MediaRepository mediaRepository;
+
+    @Autowired
+    private DocumentRepository documentRepository;
+
+    @Autowired
+    private Utils utils;
+
+    @Autowired
+    private YoutubeService youtubeService;
+
     @Override
     public String uploadImage(MultipartFile file) {
         try {
@@ -68,6 +94,77 @@ public class HelperServiceImpl implements HelperService {
             Logger.getLogger(HelperServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
             return false;
         }
+    }
+
+    @Override
+    public void deleteMedia(Integer id) {
+        EntityCheckHandler.checkEntityExistById(mediaRepository, id);
+        mediaRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteDocument(Integer id) {
+        EntityCheckHandler.checkEntityExistById(documentRepository, id);
+        documentRepository.deleteById(id);
+    }
+
+    @Override
+    public void uploadMedia(List<MultipartFile> files, Property property) throws IOException {
+        List<Media> medias = new ArrayList<>();
+        for (MultipartFile file: files) {
+            Media media = new Media();
+            if (utils.isVideoFile(file)){
+
+                media.setMediaType("VIDEO");
+                media.setUrl(youtubeService.uploadFile(utils.multipartToFile(file),
+                        Instant.now().toString(), "Đây là description" ));
+            }
+            else {
+
+                media.setMediaType("IMAGE");
+                media.setUrl(uploadImage(file));
+            }
+            media.setMediaName(file.getName());
+            media.setProperty(property);
+            medias.add(media);
+        }
+        mediaRepository.saveAll(medias);
+    }
+
+    @Override
+    public void uploadImages(MultipartFile file, Property property) throws IOException {
+        Media media = new Media();
+        if (utils.isVideoFile(file)){
+            if (mediaRepository.countMediaByPropertyIdAndMediaType(property.getId(), "%video%") >= 2) {
+                throw new RejectException("Quá số lượng video được upload");
+            }
+            File f = utils.multipartToFile(file);
+            media.setUrl(youtubeService.uploadFile(f, Instant.now().toString()+property.getId(),
+                    "Thuộc quyền sở hữu của cty abc"));
+        }
+        else {
+            if (mediaRepository.countMediaByPropertyIdAndMediaType(property.getId(), "%image%") >= 10) {
+                throw new RejectException("Quá số lượng hình ảnh upload");
+            }
+            media.setUrl(uploadImage(file));
+        }
+        media.setMediaName(file.getName());
+        media.setMediaType(file.getContentType());
+        media.setProperty(property);
+        mediaRepository.save(media);
+    }
+
+    @Override
+    public void uploadDocument(MultipartFile file, Property property)  {
+        if (documentRepository.countByPropertyId(property.getId()) == 2){
+            throw new RejectException("Quá tài liệu được đăng");
+        }
+        String url = uploadImage(file);
+        Document document = new Document();
+        document.setDocumentName(file.getName());
+        document.setUrl(url);
+        document.setProperty(property);
+        documentRepository.save(document);
     }
 
     @Override
@@ -120,11 +217,6 @@ public class HelperServiceImpl implements HelperService {
             MimeMessageHelper helper = new MimeMessageHelper(
                     message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
                     StandardCharsets.UTF_8.name());
-            // add attachment
-//            helper.addAttachment("logo.png", new ClassPathResource("logo.png"));
-
-//            Template t = config.getTemplate("email-template.ftl");
-//            Template t = config.getTemplate("active-account.ftl");
             Template t = config.getTemplate(pathMail);
             model.put("logo", env.getProperty("app.logo"));
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(t, model);

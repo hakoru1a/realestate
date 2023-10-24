@@ -11,6 +11,7 @@ import com.dpdc.realestate.models.entity.Customer;
 import com.dpdc.realestate.models.entity.Role;
 import com.dpdc.realestate.models.entity.User;
 import com.dpdc.realestate.service.CustomerService;
+import com.dpdc.realestate.service.RoleService;
 import com.dpdc.realestate.service.UserService;
 import com.dpdc.realestate.service.ValidationService;
 import org.modelmapper.ModelMapper;
@@ -29,6 +30,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users/")
+@CrossOrigin
 public class UserAPI {
 
     @Autowired
@@ -44,12 +46,13 @@ public class UserAPI {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private CustomerService customerService;
+    private RoleService roleService;
 
     @Autowired
     private ValidationService validationService;
     @PostMapping
-    public ResponseEntity<ModelResponse> registerUser(@RequestBody @Valid CredentialRegister credential
+    public ResponseEntity<ModelResponse> registerUser(@RequestBody @Valid CredentialRegister credential,
+            @RequestParam(defaultValue = "1") String roleId
             , BindingResult result) throws Exception {
         if (result.hasErrors()) {
             throw new BindException(result);
@@ -57,7 +60,10 @@ public class UserAPI {
         validationService.validateCredential(credential, false);
         try {
             User newUser = mapper.map(credential, User.class);
-            // default role = staff
+            newUser.setPassword(env.getProperty("app.default_password"));
+            Integer ro = Integer.valueOf(roleId);
+            newUser.setRole(roleService.getRoleById(ro));
+            newUser.setIsActive(true);
             User savedUser = userService.register(newUser);
             return new
                     ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
@@ -107,5 +113,37 @@ public class UserAPI {
             throw new Exception(env.getProperty("api.notify.change_status_fail"));
         }
         return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedUser), HttpStatus.OK);
+    }
+    @PutMapping("/update-profile/{userId}/{roleId}/admin")
+    public ResponseEntity<ModelResponse> updateProfileAdmin( @RequestBody
+                                                                 @Valid CredentialRegister profile
+            ,@PathVariable Integer userId
+            ,@PathVariable Integer roleId
+            ,BindingResult result) throws Exception{
+        if (result.hasErrors()) {
+            throw new BindException(result);
+        }
+        validationService.validateCredential(userId, profile, false);
+        User existingUser = userService.findById(userId);
+        existingUser.setUsername(profile.getUsername());
+        existingUser.setEmail(profile.getEmail());
+        existingUser.setPhone(profile.getPhone());
+        existingUser.setFullname(profile.getFullname());
+        existingUser.setRole(roleService.getRoleById(roleId));
+        existingUser.setPassword(env.getProperty("app.default_password"));
+        User savedUser = userService.register(existingUser);
+        return new
+                ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"), savedUser), HttpStatus.OK);
+    }
+    @GetMapping("/get-all/")
+    public ResponseEntity<ModelResponse> getAllUser() throws Exception {
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                userService.getAllUser()), HttpStatus.OK);
+    }
+    @GetMapping("/details/{userId}/")
+    public ResponseEntity<ModelResponse> getUsserById(@PathVariable Integer userId)  {
+        User user = userService.findById(userId);
+        return new ResponseEntity<>(new ModelResponse(env.getProperty("api.notify.success"),
+                user), HttpStatus.OK);
     }
 }
